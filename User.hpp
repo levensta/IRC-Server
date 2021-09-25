@@ -8,6 +8,8 @@
 # include <vector>
 # include <queue>
 # include <sys/socket.h>
+# include <algorithm>
+# include <fcntl.h>
 
 enum Role
 {
@@ -24,9 +26,10 @@ class User
 		Role					role;
 	public:
 		User(int sockfd);
-		int			getSockfd() const;
-		void		readMessage();
-		int			hadleMessages();
+		~User();
+		int						getSockfd() const;
+		void					readMessage();
+		int						hadleMessages();
 };
 
 #endif

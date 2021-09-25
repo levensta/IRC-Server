@@ -2,6 +2,11 @@
 
 User::User(int sockfd) :
 sockfd(sockfd), role(client)
+{
+	(void)role;
+}
+
+User::~User()
 {}
 
 int		User::getSockfd() const
@@ -47,6 +52,7 @@ void	User::readMessage()
 		text = messages.front();
 	char buffer[100];
 	int bytesRead;
+	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 	while ((bytesRead = read(sockfd, buffer, 99)) > 0)
 	{
 		buffer[bytesRead] = 0;
@@ -58,13 +64,12 @@ void	User::readMessage()
 
 int		User::hadleMessages()
 {
-	while (messages.size() > 0 && messages.front().back() == '\n')
+	while (messages.size() > 0 && messages.front()[messages.front().size() - 1] == '\n')
 	{
 		std::string	message = messages.front();
 		messages.pop();
 		std::cout << "The message was: " << message;
 		// handle
-		std::cout << message.size() << std::endl;
 		if (message == "end\n")
 		{
 			std::string response = "Good talking to you\n";
