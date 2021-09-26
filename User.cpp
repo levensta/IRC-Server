@@ -52,12 +52,13 @@ void	User::readMessage()
 		text = messages.front();
 	char buffer[100];
 	int bytesRead;
-	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 	while ((bytesRead = read(sockfd, buffer, 99)) > 0)
 	{
 		buffer[bytesRead] = 0;
 		text += buffer;
 		buffer[0] = 0;
+		if (text.find('\n'))
+			break;
 	}
 	messages = split(text);
 }

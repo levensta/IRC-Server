@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
 Server::Server(int port) :
-port(port)
+port(port), timeout(20)
 {}
 
 Server::~Server()
@@ -48,17 +48,30 @@ void	Server::grabConnection()
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
 	if (connection >= 0)
-		connections.push_back(User(connection));
+	{
+		struct pollfd	pfd;
+		pfd.fd = connection;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+		userFDs.push_back(pfd);
+		connectedUsers.push_back(User(connection));
+	}
 }
 
 void	Server::processMessages()
 {
-	std::vector<User>::iterator	begin = connections.begin();
-	std::vector<User>::iterator	end = connections.end();
-	// Read from the connection
-	for (; begin != end; begin++)
+	int	pret = poll(userFDs.data(), userFDs.size(), timeout);
+	if (pret != 0)
 	{
-		(*begin).readMessage();
-		(*begin).hadleMessages();
+		// Read from the connection
+		for (size_t i = 0; i < userFDs.size(); i++)
+		{
+			if (userFDs[i].revents & POLLIN)
+			{
+				connectedUsers[i].readMessage();
+				connectedUsers[i].hadleMessages();
+			}
+			userFDs[i].revents = 0;
+		}
 	}
 }
