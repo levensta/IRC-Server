@@ -20,7 +20,7 @@ $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME)
 
 clean:
-	rm -rf objects
+	rm -rf $(OSOURCEFOLDER)
 
 fclean: clean
 	rm -rf $(NAME)
