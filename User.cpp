@@ -9,43 +9,12 @@ sockfd(sockfd), role(client)
 User::~User()
 {}
 
-int		User::getSockfd() const
+int							User::getSockfd() const
 {
 	return sockfd;
 }
 
-bool	newLine(char c)
-{
-	return c == '\n';
-}
-
-bool	notNewLine(char c)
-{
-	return !(newLine(c));
-}
-
-std::queue<std::string>	split(const std::string &s)
-{
-	std::queue<std::string>	ret;
-	std::string::const_iterator	i = s.begin();
-	while(i != s.end())
-	{
-		i = std::find_if(i, s.end(), notNewLine);
-		std::string::const_iterator	j = std::find_if(i, s.end(), newLine);
-		if (i != s.end())
-		{
-			if (j != s.end())
-				++j;
-			ret.push(std::string(i, j));
-			if (j != s.end())
-				--j;
-			i = j;
-		}
-	}
-	return ret;
-}
-
-void	User::readMessage()
+void						User::readMessage()
 {
 	std::string	text;
 	if (messages.size() > 0)
@@ -60,18 +29,20 @@ void	User::readMessage()
 		if (text.find('\n'))
 			break;
 	}
-	messages = split(text);
+	messages = split(text, '\n', true);
 }
 
-int		User::hadleMessages()
+int							User::hadleMessages()
 {
-	while (messages.size() > 0 && messages.front()[messages.front().size() - 1] == '\n')
+	while (messages.size() > 0 && messages.front().back() == '\n')
 	{
-		std::string	message = messages.front();
+		Message	msg(messages.front());
 		messages.pop();
-		std::cout << "The message was: " << message;
+		// log message to server console
+		std::cout << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
+		std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
 		// handle
-		if (message == "end\n")
+		if (msg.getCommand() == "end")
 		{
 			std::string response = "Good talking to you\n";
 			send(sockfd, response.c_str(), response.size(), 0);
@@ -79,8 +50,10 @@ int		User::hadleMessages()
 			close(sockfd);
 			return (-1);
 		}
-		else if (message == "help\n")
+		else if (msg.getCommand() == "help")
 			send(sockfd, "Ne pomogu!\n", 11, 0);
+		else if (msg.getCommand() == "HELP")
+			send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
 	}
 	return (0);
 }

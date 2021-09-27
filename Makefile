@@ -2,7 +2,9 @@ NAME= ircserv
 
 SOURCE=	main.cpp \
 		Server.cpp \
-		User.cpp
+		User.cpp \
+		Message.cpp \
+		utils.cpp
 
 OSOURCEFOLDER= objects/
 
@@ -14,7 +16,7 @@ $(OSOURCEFOLDER):
 	mkdir objects
 
 $(OSOURCEFOLDER)%.o: %.cpp
-	clang++ -Wall -Werror -Wextra --std=c++98 -c $< -o $@
+	clang++ -Wall -Werror -Wextra -c $< -o $@
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME)

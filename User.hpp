@@ -10,6 +10,8 @@
 # include <sys/socket.h>
 # include <algorithm>
 # include <fcntl.h>
+# include "utils.hpp"
+# include "Message.hpp"
 
 enum Role
 {
@@ -21,15 +23,16 @@ enum Role
 class User
 {
 	private:
-		int						sockfd;
-		std::queue<std::string>	messages;
-		Role					role;
+		int							sockfd;
+		std::queue<std::string>		messages;
+		Role						role;
 	public:
 		User(int sockfd);
 		~User();
-		int						getSockfd() const;
-		void					readMessage();
-		int						hadleMessages();
+		int							getSockfd() const;
+		void						readMessage();
+		std::vector<std::string>	parseCommand();
+		int							hadleMessages();
 };
 
 #endif
