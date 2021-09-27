@@ -7,15 +7,16 @@
 
 class Message
 {
-	std::string						prefix;
-	std::string						command;
-	std::vector<std::string>		parametrs;
+	private:
+		std::string						prefix;
+		std::string						command;
+		std::vector<std::string>		parametrs;
 	public:
 		Message(std::string &str);
 		virtual ~Message();
-		std::string					getPrefix() const;
-		std::string					getCommand() const;
-		std::vector<std::string>	getParams() const;
+		const std::string				&getPrefix() const;
+		const std::string				&getCommand() const;
+		const std::vector<std::string>	&getParams() const;
 };
 
 #endif

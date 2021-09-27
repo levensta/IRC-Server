@@ -7,12 +7,12 @@ port(port), timeout(20)
 Server::~Server()
 {}
 
-int		Server::getSockfd() const
+const int	&Server::getSockfd() const
 {
 	return (sockfd);
 }
 
-void	Server::createSocket()
+void		Server::createSocket()
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -22,7 +22,7 @@ void	Server::createSocket()
 	}
 }
 
-void	Server::bindSocket()
+void		Server::bindSocket()
 {
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = INADDR_ANY;
@@ -34,7 +34,7 @@ void	Server::bindSocket()
 	}
 }
 
-void	Server::listenSocket()
+void		Server::listenSocket()
 {
 	if (listen(sockfd, 128) < 0)
 	{
@@ -43,7 +43,7 @@ void	Server::listenSocket()
 	}
 }
 
-void	Server::grabConnection()
+void		Server::grabConnection()
 {
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
@@ -58,7 +58,7 @@ void	Server::grabConnection()
 	}
 }
 
-void	Server::processMessages()
+void		Server::processMessages()
 {
 	int	pret = poll(userFDs.data(), userFDs.size(), timeout);
 	if (pret != 0)

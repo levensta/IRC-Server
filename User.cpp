@@ -9,7 +9,7 @@ sockfd(sockfd), role(client)
 User::~User()
 {}
 
-int							User::getSockfd() const
+const int					&User::getSockfd() const
 {
 	return sockfd;
 }
@@ -32,6 +32,24 @@ void						User::readMessage()
 	messages = split(text, '\n', true);
 }
 
+void						logMessage(const Message &msg)
+{
+	std::cout << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
+	std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
+	auto beg = msg.getParams().begin();
+	auto end = msg.getParams().end();
+	while (beg != end)
+	{
+		if (beg == msg.getParams().begin())
+			std::cout << "Params list: \"" << *beg << "\"";
+		else
+			std::cout << ", \"" << *beg << "\"";
+		++beg;
+		if (beg == end)
+			std::cout << std::endl;
+	}
+}
+
 int							User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front().back() == '\n')
@@ -39,8 +57,7 @@ int							User::hadleMessages()
 		Message	msg(messages.front());
 		messages.pop();
 		// log message to server console
-		std::cout << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
-		std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
+		logMessage(msg);
 		// handle
 		if (msg.getCommand() == "end")
 		{

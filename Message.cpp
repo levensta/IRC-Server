@@ -36,17 +36,17 @@ Message::Message(std::string &str)
 	}
 }
 
-std::string					Message::getPrefix() const
+const std::string				&Message::getPrefix() const
 {
 	return prefix;
 }
 
-std::string					Message::getCommand() const
+const std::string				&Message::getCommand() const
 {
 	return command;
 }
 
-std::vector<std::string>	Message::getParams() const
+const std::vector<std::string>	&Message::getParams() const
 {
 	return parametrs;
 }

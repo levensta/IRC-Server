@@ -22,7 +22,7 @@ class Server
 	public:
 		Server(int port);
 		~Server();
-		int							getSockfd() const;
+		const int					&getSockfd() const;
 		void						createSocket();
 		void						bindSocket();
 		void						listenSocket();

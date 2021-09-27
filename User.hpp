@@ -29,7 +29,7 @@ class User
 	public:
 		User(int sockfd);
 		~User();
-		int							getSockfd() const;
+		const int					&getSockfd() const;
 		void						readMessage();
 		std::vector<std::string>	parseCommand();
 		int							hadleMessages();
