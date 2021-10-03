@@ -1,7 +1,7 @@
 #include "User.hpp"
 
 User::User(int sockfd) :
-sockfd(sockfd), role(client)
+sockfd(sockfd), role(client), registered(false)
 {
 	(void)role;
 }
@@ -12,6 +12,11 @@ User::~User()
 const int					&User::getSockfd() const
 {
 	return sockfd;
+}
+
+std::string					User::getPrefix() const
+{
+	return std::string(nickname + "!" + username + "@" + servername);
 }
 
 void						User::readMessage()
@@ -29,6 +34,8 @@ void						User::readMessage()
 		if (text.find('\n'))
 			break;
 	}
+	while (text.find("\r\n") != std::string::npos)
+		text.replace(text.find("\r\n"), 2, "\n");
 	messages = split(text, '\n', true);
 }
 
@@ -71,6 +78,14 @@ int							User::hadleMessages()
 			send(sockfd, "Ne pomogu!\n", 11, 0);
 		else if (msg.getCommand() == "HELP")
 			send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
+		else if (msg.getCommand() == "NICK")
+			send(sockfd, ":q 422 q :MOTD File is missing\n", 41, 0);
 	}
 	return (0);
+}
+
+void						User::sendMessage(const std::string &msg)
+{
+	if (msg.size() > 0)
+		send(sockfd, msg.c_str(), msg.size(), 0);
 }
