@@ -1,7 +1,7 @@
 #include "Channel.hpp"
 
 Channel::Channel(const std::string &name, const std::string &creator, const std::string &pass = "") :
-name(name), mainOperator(creator), pass(pass), userLimit(10), flags(0)
+name(name), pass(pass), userLimit(10), flags(0)
 {}
 
 Channel::~Channel()
@@ -55,10 +55,12 @@ void					Channel::connect(const User &user)
 	for (size_t i = 0; i < banMasks.size(); i++)
 		if (isBanned(banMasks[i], user.getPrefix()))
 			return ; 										//throw 474 ERR_BANNEDFROMCHAN
-	for (size_t i = 0; i < users.size(); i++)
-		if (users[i].getPrefix() == user.getPrefix())
+	std::map<User, size_t>::iterator	begin = users.begin();
+	std::map<User, size_t>::iterator	end = users.end();
+	for (; begin != end; ++begin)
+		if ((*begin).first.getPrefix() == user.getPrefix())
 			return ;
-	users.push_back(user);
+	users[user] = 0;
 }
 
 void					Channel::setFlag(unsigned char flag)
@@ -75,6 +77,8 @@ void					Channel::sendMessage(const std::string &message, const User &from)
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
-	for (size_t i = 0; i < users.size(); i++)
-		users[i].sendMessage(msg);
+	std::map<User, size_t>::iterator	begin = users.begin();
+	std::map<User, size_t>::iterator	end = users.end();
+	for (; begin != end; ++begin)
+		(*begin).first.sendMessage(msg);
 }

@@ -178,7 +178,7 @@ int							User::hadleMessages()
 	return (0);
 }
 
-void						User::sendMessage(const std::string &msg)
+void						User::sendMessage(const std::string &msg) const
 {
 	if (msg.size() > 0)
 		send(sockfd, msg.c_str(), msg.size(), 0);

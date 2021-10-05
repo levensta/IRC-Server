@@ -3,6 +3,7 @@
 
 # include <string>
 # include <vector>
+# include <map>
 # include "User.hpp"
 
 # define PRIVATE	0b00001
@@ -15,13 +16,12 @@ class Channel
 {
 	private:
 		std::string					name;
-		std::string					mainOperator;
-		std::string					operators;
+		std::vector<std::string>	operators;
 		std::string					pass;
 		unsigned short				userLimit;
 		std::vector<std::string>	banMasks;
 		unsigned char				flags;
-		std::vector<User>			users;
+		std::map<User, size_t>		users;
 		std::string					topic;
 	public:
 		Channel(const std::string &name, const std::string &creator, const std::string &pass = "");

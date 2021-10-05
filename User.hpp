@@ -61,7 +61,7 @@ class User
 		void						readMessage();
 		std::vector<std::string>	parseCommand();
 		int							hadleMessages();
-		void						sendMessage(const std::string &msg);
+		void						sendMessage(const std::string &msg) const;
 };
 
 #endif
