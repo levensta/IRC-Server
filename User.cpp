@@ -133,7 +133,7 @@ int							User::userCmd(const Message &msg)
 	else if (registered)
 		sendError(*this, ERR_ALREADYREGISTRED);
 	else
-	{
+	{ // Проверить валидность всего этого
 		username = msg.getParams()[0];
 		hostname = msg.getParams()[1];
 		servername = msg.getParams()[2];
@@ -159,9 +159,15 @@ int							User::hadleMessages()
 			if (msg.getCommand() == "PASS")
 				this->passCmd(msg);
 			else if (msg.getCommand() == "USER")
-				return (this->userCmd(msg));
+			{
+				if (this->userCmd(msg) == -1)
+					return (-1);
+			}
 			else if (msg.getCommand() == "NICK")
-				return (this->nickCmd(msg));
+			{
+				if (this->nickCmd(msg) == -1)
+					return (-1);
+			}
 			else
 				sendError(*this, ERR_NOTREGISTERED);
 		}

@@ -5,7 +5,8 @@ SOURCE=	main.cpp \
 		User.cpp \
 		Message.cpp \
 		utils.cpp \
-		sendError.cpp
+		sendError.cpp \
+		sendReply.cpp
 
 OSOURCEFOLDER= objects/
 

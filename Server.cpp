@@ -2,7 +2,17 @@
 
 Server::Server(int port, const std::string &password) :
 port(port), timeout(20), password(password), name("IRCat")
-{}
+{
+	// Read MOTD
+	std::string		line;
+	std::ifstream	motdFile("IRCat.motd");
+	if (motdFile.is_open())
+	{
+		while (getline(motdFile, line))
+			motd.push_back(line);
+		motdFile.close();
+	}
+}
 
 Server::~Server()
 {}
@@ -111,4 +121,11 @@ void						Server::sendMOTD(const User &user) const
 {
 	if (motd.size() == 0)
 		sendError(user, ERR_NOMOTD);
+	else
+	{
+		sendReply(user, RPL_MOTDSTART, name);
+		for (size_t i = 0; i < motd.size(); ++i)
+			sendReply(user, RPL_MOTD, motd[i]);
+		sendReply(user, RPL_ENDOFMOTD);
+	}
 }

@@ -2,8 +2,8 @@
 # define SERVER_HPP
 
 class User;
+class Channel;
 
-# include "User.hpp"
 # include <sys/socket.h> // For socket functions
 # include <netinet/in.h> // For sockaddr_in
 # include <cstdlib> // For exit() and EXIT_FAILURE
@@ -11,7 +11,12 @@ class User;
 # include <unistd.h>
 # include <errno.h>
 # include <poll.h>
+# include <fstream>
+# include <string>
+# include "User.hpp"
+# include "Channel.hpp"
 # include "sendError.hpp"
+# include "sendReply.hpp"
 
 class Server
 {
@@ -24,7 +29,8 @@ class Server
 		const id_t					timeout;
 		std::string					password;
 		std::string					name;
-		std::string					motd;
+		std::vector<std::string>	motd;
+		std::vector<Channel>		channels;
 	public:
 		Server(int port, const std::string &password);
 		~Server();
