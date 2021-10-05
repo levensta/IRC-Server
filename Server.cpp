@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
-Server::Server(int port) :
-port(port), timeout(20)
+Server::Server(int port, const std::string &password) :
+port(port), timeout(20), password(password), name("IRCat")
 {}
 
 Server::~Server()
@@ -10,6 +10,27 @@ Server::~Server()
 const int	&Server::getSockfd() const
 {
 	return (sockfd);
+}
+
+const std::string			&Server::getPassword() const
+{
+	return (password);
+}
+
+const std::string			&Server::getServername() const
+{
+	return (name);
+}
+
+bool						Server::containsNickname(const std::string &nickname) const
+{
+	size_t	usersCount = connectedUsers.size();
+	for (size_t i = 0; i < usersCount; i++)
+	{
+		if (connectedUsers[i].getNickname() == nickname)
+			return (true);
+	}
+	return (false);
 }
 
 void		Server::createSocket()
@@ -54,13 +75,14 @@ void		Server::grabConnection()
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(User(connection));
+		connectedUsers.push_back(User(connection, *this));
 	}
 }
 
 void		Server::processMessages()
 {
 	int	pret = poll(userFDs.data(), userFDs.size(), timeout);
+	std::vector<int>	toErase;
 	if (pret != 0)
 	{
 		// Read from the connection
@@ -69,9 +91,24 @@ void		Server::processMessages()
 			if (userFDs[i].revents & POLLIN)
 			{
 				connectedUsers[i].readMessage();
-				connectedUsers[i].hadleMessages();
+				if (connectedUsers[i].hadleMessages() == -1)
+					toErase.push_back(i - toErase.size());
 			}
 			userFDs[i].revents = 0;
 		}
+		// Delete broken connections
+		for (size_t i = 0; i < toErase.size(); i++)
+		{
+			size_t	pos = toErase[i];
+			close(connectedUsers[pos].getSockfd());
+			connectedUsers.erase(connectedUsers.begin() + pos);
+			userFDs.erase(userFDs.begin() + pos);
+		}
 	}
+}
+
+void						Server::sendMOTD(const User &user) const
+{
+	if (motd.size() == 0)
+		sendError(user, ERR_NOMOTD);
 }

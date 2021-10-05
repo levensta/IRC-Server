@@ -1,8 +1,9 @@
 #include "User.hpp"
 
-User::User(int sockfd) :
-sockfd(sockfd), role(client), registered(false)
+User::User(int sockfd, const Server &server) :
+enterUsername(false), enterNickname(false), registered(false), sockfd(sockfd), role(client)
 {
+	this->server = &server;
 	(void)role;
 }
 
@@ -12,6 +13,16 @@ User::~User()
 const int					&User::getSockfd() const
 {
 	return sockfd;
+}
+
+const std::string			&User::getNickname() const
+{
+	return nickname;
+}
+
+const std::string			&User::getServername() const
+{
+	return (servername);
 }
 
 std::string					User::getPrefix() const
@@ -43,18 +54,93 @@ void						logMessage(const Message &msg)
 {
 	std::cout << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
 	std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
-	auto beg = msg.getParams().begin();
-	auto end = msg.getParams().end();
-	while (beg != end)
+	const std::vector<std::string>	params = msg.getParams();
+	size_t	paramsSize = params.size();
+	for (size_t i = 0; i < paramsSize; i++)
 	{
-		if (beg == msg.getParams().begin())
-			std::cout << "Params list: \"" << *beg << "\"";
+		if (i == 0)
+			std::cout << "Params list: \"" << params[i] << "\"";
 		else
-			std::cout << ", \"" << *beg << "\"";
-		++beg;
-		if (beg == end)
+			std::cout << ", \"" << params[i] << "\"";
+		if (i == (paramsSize - 1))
 			std::cout << std::endl;
 	}
+}
+
+bool						User::isValidNick(const std::string &nick) const
+{
+	std::string	special = "-[]\\`^{}";
+	for (size_t i = 0; i < nick.size(); i++)
+	{
+		if ((nick[i] >= 'a' && nick[i] <= 'z')
+		|| (nick[i] >= 'A' && nick[i] <= 'Z')
+		|| (special.find(nick[i]) != std::string::npos))
+			continue ;
+		else
+			return (false);
+	}
+	return (true);
+}
+
+int							User::checkConnection()
+{
+	if (enterNickname && enterUsername)
+	{
+		if (password == server->getPassword() || server->getPassword().size() == 0)
+		{
+			if (!registered)
+			{
+				registered = true;
+				server->sendMOTD(*this);
+			}
+		}
+		else
+			return (-1);
+	}
+	return (0);
+}
+
+void						User::passCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		sendError(*this, ERR_NEEDMOREPARAMS);
+	else if (registered)
+		sendError(*this, ERR_ALREADYREGISTRED);
+	else
+		password = msg.getParams()[0];
+}
+
+int							User::nickCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		sendError(*this, ERR_NEEDMOREPARAMS);
+	else if (!isValidNick(msg.getParams()[0]))
+		sendError(*this, ERR_ERRONEUSNICKNAME);
+	else if (server->containsNickname(msg.getParams()[0]))
+		sendError(*this, ERR_NICKNAMEINUSE);
+	else
+	{
+		nickname = msg.getParams()[0];
+		enterNickname = true;
+	}
+	return (checkConnection());
+}
+
+int							User::userCmd(const Message &msg)
+{
+	if (msg.getParams().size() < 4)
+		sendError(*this, ERR_NEEDMOREPARAMS);
+	else if (registered)
+		sendError(*this, ERR_ALREADYREGISTRED);
+	else
+	{
+		username = msg.getParams()[0];
+		hostname = msg.getParams()[1];
+		servername = msg.getParams()[2];
+		realname = msg.getParams()[3];
+		enterUsername = true;
+	}
+	return (checkConnection());
 }
 
 int							User::hadleMessages()
@@ -66,20 +152,28 @@ int							User::hadleMessages()
 		// log message to server console
 		logMessage(msg);
 		// handle
-		if (msg.getCommand() == "end")
-		{
-			std::string response = "Good talking to you\n";
-			send(sockfd, response.c_str(), response.size(), 0);
-			// Close the connections
-			close(sockfd);
+		if (msg.getCommand() == "QUIT")
 			return (-1);
+		else if (!registered)
+		{
+			if (msg.getCommand() == "PASS")
+				this->passCmd(msg);
+			else if (msg.getCommand() == "USER")
+				return (this->userCmd(msg));
+			else if (msg.getCommand() == "NICK")
+				return (this->nickCmd(msg));
+			else
+				sendError(*this, ERR_NOTREGISTERED);
 		}
-		else if (msg.getCommand() == "help")
-			send(sockfd, "Ne pomogu!\n", 11, 0);
-		else if (msg.getCommand() == "HELP")
-			send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
-		else if (msg.getCommand() == "NICK")
-			send(sockfd, ":q 422 q :MOTD File is missing\n", 41, 0);
+		else
+		{
+			if (msg.getCommand() == "help")
+				send(sockfd, "Ne pomogu!\n", 11, 0);
+			else if (msg.getCommand() == "HELP")
+				send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
+			else if (msg.getCommand() == "NICK")
+				send(sockfd, ":q 422 q :MOTD File is missing\n", 41, 0);
+		}
 	}
 	return (0);
 }

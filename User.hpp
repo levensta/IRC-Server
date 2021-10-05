@@ -1,6 +1,8 @@
 #ifndef USER_HPP
 # define USER_HPP
 
+class Server;
+
 # include <string>
 # include <iostream>
 # include <sstream>
@@ -12,6 +14,7 @@
 # include <fcntl.h>
 # include "utils.hpp"
 # include "Message.hpp"
+# include "Server.hpp"
 
 enum Role
 {
@@ -23,19 +26,34 @@ enum Role
 class User
 {
 	private:
+		const Server				*server;
+		bool						enterUsername;
+		bool						enterNickname;
 		bool						registered;
+		std::string					password;
 		std::string					nickname;
 		std::string					username;
+		std::string					hostname;
 		std::string					servername;
 		std::string					realname;
 		int							sockfd;
 		std::queue<std::string>		messages;
 		Role						role;
+
+		bool						isValidNick(const std::string &nick) const;
+
+		void						passCmd(const Message &msg);
+		int							nickCmd(const Message &msg);
+		int							userCmd(const Message &msg);
+
+		int							checkConnection();
 	public:
-		User(int sockfd);
+		User(int sockfd, const Server &server);
 		~User();
 
 		const int					&getSockfd() const;
+		const std::string			&getNickname() const;
+		const std::string			&getServername() const;
 		std::string					getPrefix() const;
 
 		void						readMessage();

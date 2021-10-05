@@ -6,9 +6,9 @@
 
 int main(int argc, char **argv)
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
-		std::cout << "Wrong port!" << std::endl;
+		std::cout << "Usage: ./ircserv <port> <password>" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	Server		server(port);
+	Server		server(port, argv[2]);
 
 	// Create a socket (IPv4, TCP)
 	server.createSocket();
