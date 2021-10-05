@@ -29,9 +29,3 @@ std::queue<std::string>		split(const std::string &s, char sep, bool include)
 	}
 	return ret;
 }
-
-void	sendError(const User &user, int err)
-{
-	std::string	msg = "ERROR: " + std::to_string(err) + "\n";
-	send(user.getSockfd(), msg.c_str(), msg.size(), 0);
-}

@@ -4,7 +4,8 @@ SOURCE=	main.cpp \
 		Server.cpp \
 		User.cpp \
 		Message.cpp \
-		utils.cpp
+		utils.cpp \
+		sendError.cpp
 
 OSOURCEFOLDER= objects/
 

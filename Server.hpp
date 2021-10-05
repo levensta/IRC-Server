@@ -11,6 +11,7 @@ class User;
 # include <unistd.h>
 # include <errno.h>
 # include <poll.h>
+# include "sendError.hpp"
 
 class Server
 {

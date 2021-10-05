@@ -2,6 +2,7 @@
 # define USER_HPP
 
 class Server;
+class Message;
 
 # include <string>
 # include <iostream>
@@ -15,6 +16,7 @@ class Server;
 # include "utils.hpp"
 # include "Message.hpp"
 # include "Server.hpp"
+# include "sendError.hpp"
 
 enum Role
 {

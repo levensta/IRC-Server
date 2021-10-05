@@ -4,13 +4,10 @@
 # include <queue>
 # include <string>
 # include <algorithm>
-
-# include "User.hpp"
-# include "answers.h"
+# include <initializer_list>
 
 bool						newLine(char c, char sep);
 bool						notNewLine(char c, char sep);
 std::queue<std::string>		split(const std::string &s, char sep, bool include);
-void						sendError(const User &user, int err);
 
 #endif

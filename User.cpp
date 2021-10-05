@@ -103,7 +103,7 @@ int							User::checkConnection()
 void						User::passCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
-		sendError(*this, ERR_NEEDMOREPARAMS);
+		sendError(*this, ERR_NEEDMOREPARAMS, "PASS");
 	else if (registered)
 		sendError(*this, ERR_ALREADYREGISTRED);
 	else
@@ -113,11 +113,11 @@ void						User::passCmd(const Message &msg)
 int							User::nickCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
-		sendError(*this, ERR_NEEDMOREPARAMS);
+		sendError(*this, ERR_NEEDMOREPARAMS, "NICK");
 	else if (!isValidNick(msg.getParams()[0]))
-		sendError(*this, ERR_ERRONEUSNICKNAME);
+		sendError(*this, ERR_ERRONEUSNICKNAME, msg.getParams()[0]);
 	else if (server->containsNickname(msg.getParams()[0]))
-		sendError(*this, ERR_NICKNAMEINUSE);
+		sendError(*this, ERR_NICKNAMEINUSE, msg.getParams()[0]);
 	else
 	{
 		nickname = msg.getParams()[0];
@@ -129,7 +129,7 @@ int							User::nickCmd(const Message &msg)
 int							User::userCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 4)
-		sendError(*this, ERR_NEEDMOREPARAMS);
+		sendError(*this, ERR_NEEDMOREPARAMS, "USER");
 	else if (registered)
 		sendError(*this, ERR_ALREADYREGISTRED);
 	else
