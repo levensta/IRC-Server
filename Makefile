@@ -5,7 +5,9 @@ SOURCE=	main.cpp \
 		User.cpp \
 		Message.cpp \
 		utils.cpp \
-		sendError.cpp
+		sendError.cpp \
+		sendReply.cpp \
+		Channel.cpp
 
 OSOURCEFOLDER= objects/
 
@@ -20,7 +22,7 @@ $(OSOURCEFOLDER)%.o: %.cpp
 	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++11
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
-	clang++ $(OSOURCE) -o $(NAME)
+	clang++ -g $(OSOURCE) -o $(NAME)
 
 clean:
 	rm -rf $(OSOURCEFOLDER)
