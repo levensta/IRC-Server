@@ -1,6 +1,6 @@
 #include "User.hpp"
 
-User::User(int sockfd, const Server &server) :
+User::User(int sockfd, Server &server) :
 enterUsername(false), enterNickname(false), registered(false), sockfd(sockfd), role(client)
 {
 	this->server = &server;
@@ -22,12 +22,12 @@ const std::string			&User::getNickname() const
 
 const std::string			&User::getServername() const
 {
-	return (servername);
+	return servername;
 }
 
 std::string					User::getPrefix() const
 {
-	return std::string(nickname + "!" + username + "@" + servername);
+	return std::string(nickname + "!" + username + "@" + hostname);
 }
 
 void						User::readMessage()
@@ -52,7 +52,7 @@ void						User::readMessage()
 
 void						logMessage(const Message &msg)
 {
-	std::cout << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
+	std::cout << std::endl << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
 	std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
 	const std::vector<std::string>	params = msg.getParams();
 	size_t	paramsSize = params.size();
@@ -65,6 +65,7 @@ void						logMessage(const Message &msg)
 		if (i == (paramsSize - 1))
 			std::cout << std::endl;
 	}
+	std::cout << std::endl;
 }
 
 bool						User::isValidNick(const std::string &nick) const
@@ -80,6 +81,19 @@ bool						User::isValidNick(const std::string &nick) const
 			return (false);
 	}
 	return (true);
+}
+
+bool						User::isValidChannelName(const std::string &name) const
+{
+	if (name[0] != '#' && name[0] != '&')
+		return false;
+	for (size_t i = 1; i < name.size(); i++)
+	{
+		if (name[i] == ' ' || name[i] == 7 || name[i] == 0 \
+			|| name[i] == 13 || name[i] == 10 || name[i] == ',')
+			return false;
+	}
+	return true;
 }
 
 int							User::checkConnection()
@@ -143,6 +157,37 @@ int							User::userCmd(const Message &msg)
 	return (checkConnection());
 }
 
+void						User::joinCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		sendError(*this, ERR_NEEDMOREPARAMS, "JOIN");
+	else
+	{
+		std::queue<std::string>	chans = split(msg.getParams()[0], ',', false);
+		std::queue<std::string>	keys;
+		if (msg.getParams().size() > 1)
+			keys = split(msg.getParams()[1], ',', false);
+		for (; chans.size() > 0; chans.pop())
+		{
+			std::string	key = keys.size() ? keys.front() : "";
+			if (keys.size() > 0)
+				keys.pop();
+			if (!isValidChannelName(chans.front()))
+			{
+				sendError(*this, ERR_NOSUCHCHANNEL, chans.front());
+				continue ;
+			}
+			else if (channels.size() == 10) // add maxsize to config
+			{
+				sendError(*this, ERR_TOOMANYCHANNELS, chans.front());
+				continue ;
+			}
+			else if (server->connectToChannel(*this, chans.front(), key) == 1)
+				channels.push_back(server->getChannels().at(chans.front()));
+		}
+	}
+}
+
 int							User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front().back() == '\n')
@@ -173,12 +218,8 @@ int							User::hadleMessages()
 		}
 		else
 		{
-			if (msg.getCommand() == "help")
-				send(sockfd, "Ne pomogu!\n", 11, 0);
-			else if (msg.getCommand() == "HELP")
-				send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
-			else if (msg.getCommand() == "NICK")
-				send(sockfd, ":q 422 q :MOTD File is missing\n", 41, 0);
+			if (msg.getCommand() == "JOIN")
+				this->joinCmd(msg);
 		}
 	}
 	return (0);

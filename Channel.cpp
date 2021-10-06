@@ -1,8 +1,11 @@
 #include "Channel.hpp"
 
-Channel::Channel(const std::string &name, const std::string &creator, const std::string &pass = "") :
-name(name), pass(pass), userLimit(10), flags(0)
-{}
+Channel::Channel(const std::string &name, const User &creator, const std::string &pass) :
+name(name), pass(pass), userLimit(0), flags(0)
+{
+	users[&creator] = time(0);
+	operators.push_back(&creator);
+}
 
 Channel::~Channel()
 {}
@@ -50,17 +53,40 @@ bool					isBanned(const std::string &mask, const std::string &prefix)
 	}
 }
 
-void					Channel::connect(const User &user)
+bool						Channel::isInvited(const User &user)
 {
-	for (size_t i = 0; i < banMasks.size(); i++)
-		if (isBanned(banMasks[i], user.getPrefix()))
-			return ; 										//throw 474 ERR_BANNEDFROMCHAN
-	std::map<User, size_t>::iterator	begin = users.begin();
-	std::map<User, size_t>::iterator	end = users.end();
-	for (; begin != end; ++begin)
-		if ((*begin).first.getPrefix() == user.getPrefix())
-			return ;
-	users[user] = 0;
+	for (size_t i = 0; i < invitedUsers.size(); i++)
+		if (invitedUsers[i]->getPrefix() == user.getPrefix())
+			return true;
+	return false;
+}
+
+void					Channel::connect(const User &user, const std::string &key)
+{
+	if (flags & PRIVATE && key != pass)
+		sendError(user, ERR_BADCHANNELKEY, name);
+	else if (userLimit != 0 && users.size() >= userLimit)
+		sendError(user, ERR_CHANNELISFULL, name);
+	else if (flags & INVITEONLY && !isInvited(user))
+		sendError(user, ERR_INVITEONLYCHAN, name);
+	else
+	{
+		for (size_t i = 0; i < banMasks.size(); i++)
+		{
+			if (isBanned(banMasks[i], user.getPrefix()))
+			{
+				sendError(user, ERR_BANNEDFROMCHAN, name);
+				return ;
+			}
+		}
+		std::map<const User *, time_t>::iterator	begin = users.begin();
+		std::map<const User *, time_t>::iterator	end = users.end();
+		for (; begin != end; ++begin)
+			if ((*begin).first->getPrefix() == user.getPrefix())
+				return ;
+		users[&user] = time(0);
+		// call TOPIC
+	}
 }
 
 void					Channel::setFlag(unsigned char flag)
@@ -77,8 +103,8 @@ void					Channel::sendMessage(const std::string &message, const User &from)
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
-	std::map<User, size_t>::iterator	begin = users.begin();
-	std::map<User, size_t>::iterator	end = users.end();
+		std::map<const User *, time_t>::iterator	begin = users.begin();
+		std::map<const User *, time_t>::iterator	end = users.end();
 	for (; begin != end; ++begin)
-		(*begin).first.sendMessage(msg);
+		(*begin).first->sendMessage(msg);
 }

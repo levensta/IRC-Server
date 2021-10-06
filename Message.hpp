@@ -10,7 +10,11 @@ class Message
 	private:
 		std::string						prefix;
 		std::string						command;
-		std::vector<std::string>		parametrs;
+		std::vector<std::string>		parameters;
+
+		Message();
+		Message(const Message& copy);
+		Message	&operator=(const Message& other);
 	public:
 		Message(std::string &str);
 		virtual ~Message();

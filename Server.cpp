@@ -22,14 +22,19 @@ const int	&Server::getSockfd() const
 	return (sockfd);
 }
 
-const std::string			&Server::getPassword() const
+const std::string						&Server::getPassword() const
 {
 	return (password);
 }
 
-const std::string			&Server::getServername() const
+const std::string						&Server::getServername() const
 {
 	return (name);
+}
+
+const std::map<std::string, Channel *>	&Server::getChannels() const
+{
+	return (channels);
 }
 
 bool						Server::containsNickname(const std::string &nickname) const
@@ -37,13 +42,13 @@ bool						Server::containsNickname(const std::string &nickname) const
 	size_t	usersCount = connectedUsers.size();
 	for (size_t i = 0; i < usersCount; i++)
 	{
-		if (connectedUsers[i].getNickname() == nickname)
+		if (connectedUsers[i]->getNickname() == nickname)
 			return (true);
 	}
 	return (false);
 }
 
-void		Server::createSocket()
+void									Server::createSocket()
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -53,7 +58,7 @@ void		Server::createSocket()
 	}
 }
 
-void		Server::bindSocket()
+void									Server::bindSocket()
 {
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = INADDR_ANY;
@@ -65,7 +70,7 @@ void		Server::bindSocket()
 	}
 }
 
-void		Server::listenSocket()
+void									Server::listenSocket()
 {
 	if (listen(sockfd, 128) < 0)
 	{
@@ -74,7 +79,7 @@ void		Server::listenSocket()
 	}
 }
 
-void		Server::grabConnection()
+void									Server::grabConnection()
 {
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
@@ -85,11 +90,11 @@ void		Server::grabConnection()
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(User(connection, *this));
+		connectedUsers.push_back(new User(connection, *this));
 	}
 }
 
-void		Server::processMessages()
+void									Server::processMessages()
 {
 	int	pret = poll(userFDs.data(), userFDs.size(), timeout);
 	std::vector<int>	toErase;
@@ -100,8 +105,8 @@ void		Server::processMessages()
 		{
 			if (userFDs[i].revents & POLLIN)
 			{
-				connectedUsers[i].readMessage();
-				if (connectedUsers[i].hadleMessages() == -1)
+				connectedUsers[i]->readMessage();
+				if (connectedUsers[i]->hadleMessages() == -1)
 					toErase.push_back(i - toErase.size());
 			}
 			userFDs[i].revents = 0;
@@ -110,14 +115,14 @@ void		Server::processMessages()
 		for (size_t i = 0; i < toErase.size(); i++)
 		{
 			size_t	pos = toErase[i];
-			close(connectedUsers[pos].getSockfd());
+			close(connectedUsers[pos]->getSockfd());
 			connectedUsers.erase(connectedUsers.begin() + pos);
 			userFDs.erase(userFDs.begin() + pos);
 		}
 	}
 }
 
-void						Server::sendMOTD(const User &user) const
+void									Server::sendMOTD(const User &user) const
 {
 	if (motd.size() == 0)
 		sendError(user, ERR_NOMOTD);
@@ -128,4 +133,19 @@ void						Server::sendMOTD(const User &user) const
 			sendReply(user, RPL_MOTD, motd[i]);
 		sendReply(user, RPL_ENDOFMOTD);
 	}
+}
+
+int										Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
+{
+	try
+	{
+		Channel	*tmp = channels.at(name);
+		tmp->connect(user, key);
+		return (0);
+	}
+	catch(const std::exception& e)
+	{
+		channels[name] = new Channel(name, user, key);
+	}
+	return (1);
 }

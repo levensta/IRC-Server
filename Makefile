@@ -6,7 +6,8 @@ SOURCE=	main.cpp \
 		Message.cpp \
 		utils.cpp \
 		sendError.cpp \
-		sendReply.cpp
+		sendReply.cpp \
+		Channel.cpp
 
 OSOURCEFOLDER= objects/
 
@@ -18,10 +19,10 @@ $(OSOURCEFOLDER):
 	mkdir objects
 
 $(OSOURCEFOLDER)%.o: %.cpp
-	clang++ -Wall -Werror -Wextra -c $< -o $@
+	clang++ -g -Wall -Werror -Wextra -c $< -o $@
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
-	clang++ $(OSOURCE) -o $(NAME)
+	clang++ -g $(OSOURCE) -o $(NAME)
 
 clean:
 	rm -rf $(OSOURCEFOLDER)
