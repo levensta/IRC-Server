@@ -33,6 +33,11 @@ bool						Server::containsNickname(const std::string &nickname) const
 	return (false);
 }
 
+const std::vector<User>		&Server::getConnectedUsers() const
+{
+	return (connectedUsers);
+}
+
 void		Server::createSocket()
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);

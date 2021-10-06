@@ -17,7 +17,7 @@ $(OSOURCEFOLDER):
 	mkdir objects
 
 $(OSOURCEFOLDER)%.o: %.cpp
-	clang++ -Wall -Werror -Wextra -c $< -o $@
+	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++11
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME)

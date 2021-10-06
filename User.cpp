@@ -143,6 +143,58 @@ int							User::userCmd(const Message &msg)
 	return (checkConnection());
 }
 
+void 						User::privmsgCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		sendError(*this, ERR_NORECIPIENT, "PRIVMSG");
+	else if (msg.getParams().size() == 1)
+		sendError(*this, ERR_NOTEXTTOSEND);
+	else
+	{
+		std::queue<std::string> receivers = split(msg.getParams()[0], ',', false);
+		std::set<std::string> uniqReceivers;
+		while (receivers.size() > 0)
+		{
+			if (uniqReceivers.find(receivers.front()) != uniqReceivers.end())
+			{
+				sendError(*this, ERR_TOOMANYTARGETS, receivers.front());
+				return ;
+			}
+//			if (receivers.front()[0] == '#' || receivers.front()[0] == '&')
+//			{
+//				check channel;
+//			}
+			else if (!this->server->containsNickname(receivers.front()))
+			{
+				sendError(*this, ERR_NORECIPIENT, "PRIVMSG");
+				return ;
+			}
+			uniqReceivers.insert(receivers.front());
+			receivers.pop();
+		}
+		for (std::set<std::string>::iterator it = uniqReceivers.begin(); it != uniqReceivers.end(); ++it)
+		{
+//			if (*it[0] == '#' || *it[0] == '&')
+//			{
+//				sendMessage to channel
+//				return ;
+//			}
+//			else
+//			{
+				std::vector<User> users = this->server->getConnectedUsers();
+				for (size_t i = 0; i < users.size(); ++i)
+				{
+					if (users[i].getNickname() == *it)
+					{
+						users[i].sendMessage(msg.getParams()[1]);
+						break;
+					}
+				}
+//			}
+		}
+	}
+}
+
 int							User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front().back() == '\n')
@@ -159,9 +211,15 @@ int							User::hadleMessages()
 			if (msg.getCommand() == "PASS")
 				this->passCmd(msg);
 			else if (msg.getCommand() == "USER")
-				return (this->userCmd(msg));
+			{
+				if (this->userCmd(msg) == -1)
+					return (-1);
+			}
 			else if (msg.getCommand() == "NICK")
-				return (this->nickCmd(msg));
+			{
+				if (this->nickCmd(msg) == -1)
+					return (-1);
+			}
 			else
 				sendError(*this, ERR_NOTREGISTERED);
 		}
@@ -169,6 +227,8 @@ int							User::hadleMessages()
 		{
 			if (msg.getCommand() == "help")
 				send(sockfd, "Ne pomogu!\n", 11, 0);
+			else if (msg.getCommand() == "PRIVMSG")
+				this->privmsgCmd(msg);
 			else if (msg.getCommand() == "HELP")
 				send(sockfd, "ПОЧЕМУ \"Г\" ПЕРЕВЁРНУТАЯ?!\n", 45, 0);
 			else if (msg.getCommand() == "NICK")

@@ -26,11 +26,11 @@ Message::Message(std::string &str)
 				s.append(que.front());
 				que.pop();
 			}
-			parametrs.push_back(s);
+			parameters.push_back(s);
 		}
 		else
 		{
-			parametrs.push_back(que.front());
+			parameters.push_back(que.front());
 			que.pop();
 		}
 	}
@@ -48,7 +48,7 @@ const std::string				&Message::getCommand() const
 
 const std::vector<std::string>	&Message::getParams() const
 {
-	return parametrs;
+	return parameters;
 }
 
 Message::~Message()

@@ -10,6 +10,7 @@ class Message;
 # include <unistd.h>
 # include <vector>
 # include <queue>
+# include <set>
 # include <sys/socket.h>
 # include <algorithm>
 # include <fcntl.h>
@@ -47,6 +48,7 @@ class User
 		void						passCmd(const Message &msg);
 		int							nickCmd(const Message &msg);
 		int							userCmd(const Message &msg);
+		void 						privmsgCmd(const Message &msg);
 
 		int							checkConnection();
 	public:
