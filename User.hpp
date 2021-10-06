@@ -34,12 +34,14 @@ class User
 		bool							enterUsername;
 		bool							enterNickname;
 		bool							registered;
+		bool							away;
 		std::string						password;
 		std::string						nickname;
 		std::string						username;
 		std::string						hostname;
 		std::string						servername;
 		std::string						realname;
+		std::string						awayMessage;
 		int								sockfd;
 		std::queue<std::string>			messages;
 		Role							role;
@@ -47,11 +49,13 @@ class User
 
 		bool							isValidNick(const std::string &nick) const;
 		bool							isValidChannelName(const std::string &name) const;
+		bool							isOnChannel(const std::string &name) const;
 
 		void							passCmd(const Message &msg);
 		int								nickCmd(const Message &msg);
 		int								userCmd(const Message &msg);
 		void							joinCmd(const Message &msg);
+		void							inviteCmd(const Message &msg);
 
 		int								checkConnection();
 
@@ -66,6 +70,8 @@ class User
 		const std::string				&getNickname() const;
 		const std::string				&getServername() const;
 		std::string						getPrefix() const;
+		const std::string				&getAwayMessage() const;
+		bool							isAway() const;
 
 		void							readMessage();
 		std::vector<std::string>		parseCommand();

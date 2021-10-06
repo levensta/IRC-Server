@@ -52,6 +52,7 @@ class Server
 		void									processMessages();
 		void									sendMOTD(const User &user) const;
 		int										connectToChannel(const User &user, const std::string &name, const std::string &key);
+		void									inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName);
 };
 
 #endif

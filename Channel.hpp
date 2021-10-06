@@ -31,6 +31,8 @@ class Channel
 		Channel();
 		Channel(const Channel& copy);
 		Channel	&operator=(const Channel& other);
+		bool							isBanned(const std::string &mask, const std::string &prefix);
+		bool							isOperator(const User &user);
 	public:
 		Channel(const std::string &name, const User &creator, const std::string &pass = "");
 		virtual ~Channel();
@@ -39,11 +41,13 @@ class Channel
 		void							setTopic(const std::string &topic);
 
 		bool							isInvited(const User &user);
+		bool							containsNickname(const std::string &nickname) const;
 
 		void							connect(const User &user, const std::string &key);
 		void							setFlag(unsigned char flag);
 		void							removeFlag(unsigned char flag);
 		void							sendMessage(const std::string &message, const User &from);
+		void							invite(const User &user, const User &receiver);
 };
 
 #endif

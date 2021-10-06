@@ -1,7 +1,7 @@
 #include "User.hpp"
 
 User::User(int sockfd, Server &server) :
-enterUsername(false), enterNickname(false), registered(false), sockfd(sockfd), role(client)
+enterUsername(false), enterNickname(false), registered(false), away(false), sockfd(sockfd), role(client)
 {
 	this->server = &server;
 	(void)role;
@@ -30,6 +30,16 @@ std::string					User::getPrefix() const
 	return std::string(nickname + "!" + username + "@" + hostname);
 }
 
+const std::string			&User::getAwayMessage() const
+{
+	return (awayMessage);
+}
+
+bool						User::isAway() const
+{
+	return away;
+}
+
 void						User::readMessage()
 {
 	std::string	text;
@@ -42,12 +52,13 @@ void						User::readMessage()
 		buffer[bytesRead] = 0;
 		text += buffer;
 		buffer[0] = 0;
-		if (text.find('\n'))
+		if (text.find('\n') != std::string::npos)
 			break;
 	}
 	while (text.find("\r\n") != std::string::npos)
 		text.replace(text.find("\r\n"), 2, "\n");
-	messages = split(text, '\n', true);
+	if (text.size() > 1)
+		messages = split(text, '\n', true);
 }
 
 void						logMessage(const Message &msg)
@@ -94,6 +105,14 @@ bool						User::isValidChannelName(const std::string &name) const
 			return false;
 	}
 	return true;
+}
+
+bool						User::isOnChannel(const std::string &name) const
+{
+	for (size_t i = 0; i < channels.size(); i++)
+		if (channels[i]->getName() == name)
+			return true;
+	return false;
 }
 
 int							User::checkConnection()
@@ -188,6 +207,18 @@ void						User::joinCmd(const Message &msg)
 	}
 }
 
+void						User::inviteCmd(const Message &msg)
+{
+	if (msg.getParams().size() < 2)
+		sendError(*this, ERR_NEEDMOREPARAMS, "INVITE");
+	else if (!server->containsNickname(msg.getParams()[0]))
+		sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]);
+	else if (!isOnChannel(msg.getParams()[1]))
+		sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[1]);
+	else
+		server->inviteToChannel(*this, msg.getParams()[0], msg.getParams()[1]);
+}
+
 int							User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front().back() == '\n')
@@ -220,6 +251,8 @@ int							User::hadleMessages()
 		{
 			if (msg.getCommand() == "JOIN")
 				this->joinCmd(msg);
+			else if (msg.getCommand() == "INVITE")
+				this->inviteCmd(msg);
 		}
 	}
 	return (0);

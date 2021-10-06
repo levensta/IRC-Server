@@ -37,7 +37,7 @@ const std::map<std::string, Channel *>	&Server::getChannels() const
 	return (channels);
 }
 
-bool						Server::containsNickname(const std::string &nickname) const
+bool									Server::containsNickname(const std::string &nickname) const
 {
 	size_t	usersCount = connectedUsers.size();
 	for (size_t i = 0; i < usersCount; i++)
@@ -128,10 +128,10 @@ void									Server::sendMOTD(const User &user) const
 		sendError(user, ERR_NOMOTD);
 	else
 	{
-		sendReply(user, RPL_MOTDSTART, name);
+		sendReply(name, user, RPL_MOTDSTART, name);
 		for (size_t i = 0; i < motd.size(); ++i)
-			sendReply(user, RPL_MOTD, motd[i]);
-		sendReply(user, RPL_ENDOFMOTD);
+			sendReply(name, user, RPL_MOTD, motd[i]);
+		sendReply(name, user, RPL_ENDOFMOTD);
 	}
 }
 
@@ -148,4 +148,17 @@ int										Server::connectToChannel(const User &user, const std::string &name,
 		channels[name] = new Channel(name, user, key);
 	}
 	return (1);
+}
+
+void									Server::inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName)
+{
+	User	*receiver;
+	for (size_t i = 0; i < connectedUsers.size(); ++i)
+		if (connectedUsers[i]->getNickname() == nickname)
+			receiver = connectedUsers[i];
+	Channel	*chan = channels.at(chanName);
+	if (chan->containsNickname(nickname))
+		sendError(user, ERR_USERONCHANNEL, nickname, name);
+	else
+		chan->invite(user, *receiver);
 }

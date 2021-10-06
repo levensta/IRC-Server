@@ -10,17 +10,17 @@ name(name), pass(pass), userLimit(0), flags(0)
 Channel::~Channel()
 {}
 
-const std::string		&Channel::getName() const
+const std::string	&Channel::getName() const
 {
 	return (name);
 }
 
-void					Channel::setTopic(const std::string &topic)
+void				Channel::setTopic(const std::string &topic)
 {
 	this->topic = topic;
 }
 
-bool					isBanned(const std::string &mask, const std::string &prefix)
+bool				Channel::isBanned(const std::string &mask, const std::string &prefix)
 {
 	const char *rs=0, *rp;
 	const char *s = prefix.c_str();
@@ -53,7 +53,7 @@ bool					isBanned(const std::string &mask, const std::string &prefix)
 	}
 }
 
-bool						Channel::isInvited(const User &user)
+bool				Channel::isInvited(const User &user)
 {
 	for (size_t i = 0; i < invitedUsers.size(); i++)
 		if (invitedUsers[i]->getPrefix() == user.getPrefix())
@@ -61,7 +61,25 @@ bool						Channel::isInvited(const User &user)
 	return false;
 }
 
-void					Channel::connect(const User &user, const std::string &key)
+bool				Channel::isOperator(const User &user)
+{
+	for (size_t i = 0; i < operators.size(); i++)
+		if (operators[i]->getPrefix() == user.getPrefix())
+			return true;
+	return false;
+}
+
+bool				Channel::containsNickname(const std::string &nickname) const
+{
+	std::map<const User *, time_t>::const_iterator	beg = users.begin();
+	std::map<const User *, time_t>::const_iterator	end = users.end();
+	for (; beg != end; ++beg)
+		if ((*beg).first->getNickname() == nickname)
+			return (true);
+	return (false);
+}
+
+void				Channel::connect(const User &user, const std::string &key)
 {
 	if (flags & PRIVATE && key != pass)
 		sendError(user, ERR_BADCHANNELKEY, name);
@@ -89,17 +107,17 @@ void					Channel::connect(const User &user, const std::string &key)
 	}
 }
 
-void					Channel::setFlag(unsigned char flag)
+void				Channel::setFlag(unsigned char flag)
 {
 	flags |= flag;
 }
 
-void					Channel::removeFlag(unsigned char flag)
+void				Channel::removeFlag(unsigned char flag)
 {
 	flags &= ~flag;
 }
 
-void					Channel::sendMessage(const std::string &message, const User &from)
+void				Channel::sendMessage(const std::string &message, const User &from)
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
@@ -107,4 +125,18 @@ void					Channel::sendMessage(const std::string &message, const User &from)
 		std::map<const User *, time_t>::iterator	end = users.end();
 	for (; begin != end; ++begin)
 		(*begin).first->sendMessage(msg);
+}
+
+void				Channel::invite(const User &user, const User &receiver)
+{
+	if (flags & INVITEONLY && !isOperator(user))
+		sendError(user, ERR_CHANOPRIVSNEEDED, name);
+	else
+	{
+		invitedUsers.push_back(&receiver);
+		receiver.sendMessage(":" + user.getPrefix() + " INVITE " + receiver.getNickname() + " :" + name + "\n");
+		sendReply(user.getServername(), user, RPL_INVITING, name, receiver.getNickname());
+		if (receiver.isAway())
+			sendReply(user.getServername(), user, RPL_AWAY, receiver.getNickname(), receiver.getAwayMessage());
+	}
 }
