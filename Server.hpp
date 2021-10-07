@@ -43,9 +43,12 @@ class Server
 		const int								&getSockfd() const;
 		const std::string						&getPassword() const;
 		const std::string						&getServername() const;
-		const std::map<std::string, Channel *>	&getChannels() const;
+		std::map<std::string, Channel *>		&getChannels();
+		const std::vector<User *>				&getUsers() const;
+		const User								*getUserByName(const std::string &name);
 		const std::vector<User *>				&getConnectedUsers() const;
 		bool									containsNickname(const std::string &nickname) const;
+		bool									containsChannel(const std::string &name) const;
 
 		void									createSocket();
 		void									bindSocket();
@@ -54,6 +57,7 @@ class Server
 		void									processMessages();
 		void									sendMOTD(const User &user) const;
 		int										connectToChannel(const User &user, const std::string &name, const std::string &key);
+		void									inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName);
 };
 
 #endif
