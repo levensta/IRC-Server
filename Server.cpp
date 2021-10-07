@@ -32,9 +32,24 @@ const std::string						&Server::getServername() const
 	return (name);
 }
 
-const std::map<std::string, Channel *>	&Server::getChannels() const
+std::map<std::string, Channel *>		&Server::getChannels()
 {
 	return (channels);
+}
+
+const std::vector<User *>				&Server::getUsers() const
+{
+	return (connectedUsers);
+}
+
+const User								*Server::getUserByName(const std::string &name)
+{
+	User	*ret;
+	size_t	usersCount = connectedUsers.size();
+	for (size_t i = 0; i < usersCount; i++)
+		if (connectedUsers[i]->getNickname() == name)
+			ret = connectedUsers[i];
+	return ret;
 }
 
 bool									Server::containsNickname(const std::string &nickname) const
@@ -46,6 +61,18 @@ bool									Server::containsNickname(const std::string &nickname) const
 			return (true);
 	}
 	return (false);
+}
+
+bool									Server::containsChannel(const std::string &name) const
+{
+	try
+	{
+		channels.at(name);
+		return true;
+	}
+	catch(const std::exception& e)
+	{}
+	return false;
 }
 
 void									Server::createSocket()

@@ -45,7 +45,9 @@ class User
 		int								sockfd;
 		std::queue<std::string>			messages;
 		Role							role;
-		std::vector<const Channel *>	channels;
+		std::vector<Channel *>			channels;
+
+		Channel							*getChanByName(const std::string &name);
 
 		bool							isValidNick(const std::string &nick) const;
 		bool							isValidChannelName(const std::string &name) const;
@@ -56,8 +58,13 @@ class User
 		int								userCmd(const Message &msg);
 		void							joinCmd(const Message &msg);
 		void							inviteCmd(const Message &msg);
+		void							modeCmd(const Message &msg);
+		void							topicCmd(const Message &msg);
+		void							namesCmd(const Message &msg);
+		void							kickCmd(const Message &msg);
 
 		int								checkConnection();
+		void							handelChanFlags(const Message &msg);
 
 		User();
 		User(const User& copy);

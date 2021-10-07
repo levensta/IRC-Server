@@ -42,8 +42,11 @@ class Server
 		const int								&getSockfd() const;
 		const std::string						&getPassword() const;
 		const std::string						&getServername() const;
-		const std::map<std::string, Channel *>	&getChannels() const;
+		std::map<std::string, Channel *>		&getChannels();
+		const std::vector<User *>				&getUsers() const;
+		const User								*getUserByName(const std::string &name);
 		bool									containsNickname(const std::string &nickname) const;
+		bool									containsChannel(const std::string &name) const;
 
 		void									createSocket();
 		void									bindSocket();

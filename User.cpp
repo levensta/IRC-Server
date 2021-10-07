@@ -40,6 +40,15 @@ bool						User::isAway() const
 	return away;
 }
 
+Channel						*User::getChanByName(const std::string &name)
+{
+	Channel	*ret;
+	for (size_t i = 0; i < channels.size(); ++i)
+		if (channels[i]->getName() == name)
+			ret = channels[i];
+	return ret;
+}
+
 void						User::readMessage()
 {
 	std::string	text;
@@ -192,15 +201,9 @@ void						User::joinCmd(const Message &msg)
 			if (keys.size() > 0)
 				keys.pop();
 			if (!isValidChannelName(chans.front()))
-			{
 				sendError(*this, ERR_NOSUCHCHANNEL, chans.front());
-				continue ;
-			}
 			else if (channels.size() == 10) // add maxsize to config
-			{
 				sendError(*this, ERR_TOOMANYCHANNELS, chans.front());
-				continue ;
-			}
 			else if (server->connectToChannel(*this, chans.front(), key) == 1)
 				channels.push_back(server->getChannels().at(chans.front()));
 		}
@@ -213,10 +216,246 @@ void						User::inviteCmd(const Message &msg)
 		sendError(*this, ERR_NEEDMOREPARAMS, "INVITE");
 	else if (!server->containsNickname(msg.getParams()[0]))
 		sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]);
-	else if (!isOnChannel(msg.getParams()[1]))
+	else if (!isOnChannel(msg.getParams()[1]) || !server->containsChannel(msg.getParams()[1]))
 		sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[1]);
 	else
 		server->inviteToChannel(*this, msg.getParams()[0], msg.getParams()[1]);
+}
+
+void						User::handelChanFlags(const Message &msg)
+{
+	std::string	chanName = msg.getParams()[0];
+	std::string	flag = msg.getParams()[1];
+	if (flag == "+o")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else if (!server->containsNickname(msg.getParams()[2]))
+			sendError(*this, ERR_NOSUCHNICK, msg.getParams()[2]);
+		else
+			getChanByName(chanName)->addOperator(*(server->getUserByName(msg.getParams()[2])));
+	}
+	else if (flag == "-o")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else if (!server->containsNickname(msg.getParams()[2]))
+			sendError(*this, ERR_NOSUCHNICK, msg.getParams()[2]);
+		else
+			getChanByName(chanName)->removeOperator(*(server->getUserByName(msg.getParams()[2])));
+	}
+	else if (flag == "+p")
+		getChanByName(chanName)->setFlag(PRIVATE);
+	else if (flag == "-p")
+		getChanByName(chanName)->removeFlag(PRIVATE);
+	else if (flag == "+s")
+		getChanByName(chanName)->setFlag(SECRET);
+	else if (flag == "-s")
+		getChanByName(chanName)->removeFlag(SECRET);
+	else if (flag == "+i")
+		getChanByName(chanName)->setFlag(INVITEONLY);
+	else if (flag == "-i")
+		getChanByName(chanName)->removeFlag(INVITEONLY);
+	else if (flag == "+t")
+		getChanByName(chanName)->setFlag(TOPICSET);
+	else if (flag == "-t")
+		getChanByName(chanName)->removeFlag(TOPICSET);
+	else if (flag == "+n")
+	{}
+	else if (flag == "-n")
+	{}
+	else if (flag == "+m")
+		getChanByName(chanName)->setFlag(MODERATED);
+	else if (flag == "-m")
+		getChanByName(chanName)->removeFlag(MODERATED);
+	else if (flag == "+l")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->setLimit(atoi(msg.getParams()[2].c_str()));
+	}
+	else if (flag == "-l")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->setLimit(0);
+	}
+	else if (flag == "+b")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->addBanMask(msg.getParams()[2]);
+	}
+	else if (flag == "-b")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->removeBanMask(msg.getParams()[2]);
+	}
+	else if (flag == "+v")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else if (!server->containsNickname(msg.getParams()[2]))
+			sendError(*this, ERR_NOSUCHNICK, msg.getParams()[2]);
+		else
+			getChanByName(chanName)->addSpeaker(*(server->getUserByName(msg.getParams()[2])));
+	}
+	else if (flag == "-v")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else if (!server->containsNickname(msg.getParams()[2]))
+			sendError(*this, ERR_NOSUCHNICK, msg.getParams()[2]);
+		else
+			getChanByName(chanName)->removeSpeaker(*(server->getUserByName(msg.getParams()[2])));
+	}
+	else if (flag == "+k")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->setKey(*this, msg.getParams()[2]);
+	}
+	else if (flag == "-k")
+	{
+		if (msg.getParams().size() < 3)
+			sendError(*this, ERR_NEEDMOREPARAMS, msg.getCommand());
+		else
+			getChanByName(chanName)->setKey(*this, "");
+	}
+	else
+		sendError(*this, ERR_UNKNOWNMODE, flag);
+}
+
+void						User::modeCmd(const Message &msg)
+{
+	if (msg.getParams().size() < 1)
+		sendError(*this, ERR_NEEDMOREPARAMS, "MODE");
+	else
+	{
+		if (msg.getParams()[0][0] == '#')
+		{
+			if (!server->containsChannel(msg.getParams()[0]))
+				sendError(*this, ERR_NOSUCHCHANNEL, msg.getParams()[0]);
+			else if (!server->getChannels().at(msg.getParams()[0])->isOperator(*this))
+				sendError(*this, ERR_CHANOPRIVSNEEDED, msg.getParams()[0]);
+			else if (!server->getChannels().at(msg.getParams()[0])->containsNickname(nickname))
+				sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[0]);
+			else if (msg.getParams().size() == 1)
+				sendReply(servername, *this, RPL_CHANNELMODEIS); // Написать реплай
+			else
+				handelChanFlags(msg);
+		}
+		else
+		{ // Я пока не дописал моды для пользователей.
+			if (msg.getParams()[0] != nickname)
+				sendError(*this, ERR_USERSDONTMATCH);
+			else
+			{
+				if (msg.getParams().size() == 1)
+					sendReply(servername, *this, RPL_UMODEIS); // Написать реплай
+			}
+		}
+	}
+}
+
+void						User::topicCmd(const Message &msg)
+{
+	if (msg.getParams().size() < 1)
+		sendError(*this, ERR_NEEDMOREPARAMS, "TOPIC");
+	else if (!server->containsChannel(msg.getParams()[0]))
+		sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[0]);
+	else
+	{
+		Channel	*chan = server->getChannels().at(msg.getParams()[0]);
+		if (!chan->containsNickname(nickname))
+			sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[0]);
+		else if (msg.getParams().size() < 2)
+			chan->displayTopic(*this);
+		else
+			chan->setTopic(*this, msg.getParams()[1]);
+	}
+}
+
+void						User::namesCmd(const Message &msg)
+{
+	std::map<std::string, Channel *>	chans = server->getChannels();
+	if (msg.getParams().size() == 0)
+	{
+		std::vector<std::string>	usersWithoutChannel;
+		const std::vector<User *>	users = server->getUsers();
+		for (size_t i = 0; i < users.size(); i++)
+			usersWithoutChannel.push_back(users[i]->getNickname());
+		std::map<std::string, Channel *>::const_iterator	beg = chans.begin();
+		std::map<std::string, Channel *>::const_iterator	end = chans.end();
+		for (; beg != end; ++beg)
+		{
+			if (!((*beg).second->getFlags() & SECRET) && !((*beg).second->getFlags() & PRIVATE))
+			{
+				(*beg).second->displayNames(*this);
+				for (size_t i = 0; i < usersWithoutChannel.size(); i++)
+					if ((*beg).second->containsNickname(usersWithoutChannel[i]))
+						usersWithoutChannel.erase(usersWithoutChannel.begin() + i--);
+			}
+		}
+		std::string	names;
+		for (size_t i = 0; i < usersWithoutChannel.size(); i++)
+		{
+			names += usersWithoutChannel[i];
+			if (i != (usersWithoutChannel.size() - 1))
+				names += " ";
+		}
+		sendReply(servername, *this, RPL_NAMREPLY, "* *", names);
+		sendReply(servername, *this, RPL_ENDOFNAMES, "*");
+	}
+	else
+	{
+		std::queue<std::string>	chansToDisplay;
+		chansToDisplay = split(msg.getParams()[0], ',', false);
+		while (chansToDisplay.size() > 0)
+		{
+			try
+			{
+				Channel	*tmp = chans.at(chansToDisplay.front());
+				if (!(tmp->getFlags() & SECRET) && !(tmp->getFlags() & PRIVATE))
+				{
+					tmp->displayNames(*this);
+					sendReply(servername, *this, RPL_ENDOFNAMES, tmp->getName());
+				}
+			}
+			catch(const std::exception& e)
+			{}
+		}
+	}
+}
+
+void						User::kickCmd(const Message &msg)
+{
+	if (msg.getParams().size() < 2)
+		sendError(*this, ERR_NEEDMOREPARAMS, "KICK");
+	else if (!server->containsChannel(msg.getParams()[0]))
+		sendError(*this, ERR_NOSUCHCHANNEL, msg.getParams()[0]);
+	else if (!server->getChannels().at(msg.getParams()[0])->isOperator(*this))
+		sendError(*this, ERR_CHANOPRIVSNEEDED, msg.getParams()[0]);
+	else if (!server->getChannels().at(msg.getParams()[0])->containsNickname(nickname))
+		sendError(*this, ERR_NOTONCHANNEL, msg.getParams()[0]);
+	else if (!server->containsNickname(msg.getParams()[1]))
+		sendError(*this, ERR_NOSUCHNICK, msg.getParams()[1]);
+	else
+	{
+		Channel	*chan = server->getChannels().at(msg.getParams()[0]);
+		std::string	message = "KICK " + chan->getName() + " " + msg.getParams()[1] + " :";
+		if (msg.getParams().size() > 2)
+			message += msg.getParams()[2];
+		else
+			message += nickname;
+		chan->sendMessage(message + "\n", *this);
+	}
 }
 
 int							User::hadleMessages()
@@ -253,6 +492,14 @@ int							User::hadleMessages()
 				this->joinCmd(msg);
 			else if (msg.getCommand() == "INVITE")
 				this->inviteCmd(msg);
+			else if (msg.getCommand() == "MODE")
+				this->modeCmd(msg);
+			else if (msg.getCommand() == "TOPIC")
+				this->topicCmd(msg);
+			else if (msg.getCommand() == "NAMES")
+				this->namesCmd(msg);
+			else if (msg.getCommand() == "KICK")
+				this->kickCmd(msg);
 		}
 	}
 	return (0);

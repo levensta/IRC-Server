@@ -9,17 +9,19 @@ class User;
 # include <ctime>
 # include "User.hpp"
 
-# define PRIVATE	0b00001
-# define SECRET		0b00010
-# define MODERATED	0b00100
-# define INVITEONLY	0b01000
-# define TOPICSET	0b10000
+# define PRIVATE	0b000001
+# define SECRET		0b000010
+# define MODERATED	0b000100
+# define INVITEONLY	0b001000
+# define TOPICSET	0b010000
+# define NOMSGOUT	0b100000
 
 class Channel
 {
 	private:
 		std::string						name;
 		std::vector<const User *>		operators;
+		std::vector<const User *>		speakers;
 		std::string						pass;
 		unsigned short					userLimit;
 		std::vector<std::string>		banMasks;
@@ -32,15 +34,21 @@ class Channel
 		Channel(const Channel& copy);
 		Channel	&operator=(const Channel& other);
 		bool							isBanned(const std::string &mask, const std::string &prefix);
-		bool							isOperator(const User &user);
+		void							sendInfo(const User &user);
 	public:
 		Channel(const std::string &name, const User &creator, const std::string &pass = "");
 		virtual ~Channel();
 
 		const std::string				&getName() const;
-		void							setTopic(const std::string &topic);
+		const std::string				&getTopic() const;
+		void							setTopic(const User &user, const std::string &topic);
+		void							setLimit(unsigned short limit);
+		void							setKey(const User &user, const std::string &key);
+		unsigned char					&getFlags();
 
-		bool							isInvited(const User &user);
+		bool							isInvited(const User &user) const;
+		bool							isOperator(const User &user) const;
+		bool							isSpeaker(const User &user) const;
 		bool							containsNickname(const std::string &nickname) const;
 
 		void							connect(const User &user, const std::string &key);
@@ -48,6 +56,14 @@ class Channel
 		void							removeFlag(unsigned char flag);
 		void							sendMessage(const std::string &message, const User &from);
 		void							invite(const User &user, const User &receiver);
+		void							addOperator(const User &user);
+		void							removeOperator(const User &user);
+		void							addSpeaker(const User &user);
+		void							removeSpeaker(const User &user);
+		void							addBanMask(const std::string &mask);
+		void							removeBanMask(const std::string &mask);
+		void							displayTopic(const User &user);
+		void							displayNames(const User &user);
 };
 
 #endif
