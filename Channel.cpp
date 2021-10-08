@@ -1,9 +1,9 @@
 #include "Channel.hpp"
 
 Channel::Channel(const std::string &name, const User &creator, const std::string &pass) :
-name(name), pass(pass), userLimit(0), flags(0)
+name(name), pass(pass), userLimit(0), flags(NOMSGOUT)
 {
-	users[&creator] = time(0);
+	users.push_back(&creator);
 	operators.push_back(&creator);
 	sendInfo(creator);
 }
@@ -30,11 +30,11 @@ void				Channel::displayTopic(const User &user)
 void				Channel::displayNames(const User &user)
 {
 	std::string	names;
-	std::map<const User *, time_t>::const_iterator	beg = users.begin();
-	std::map<const User *, time_t>::const_iterator	end = users.end();
+	std::vector<const User *>::const_iterator	beg = users.begin();
+	std::vector<const User *>::const_iterator	end = users.end();
 	while (beg != end)
 	{
-		const User	*tmp = (*beg).first;
+		const User	*tmp = *beg;
 		if (isOperator(*tmp))
 			names += "@";
 		else if (isSpeaker(*tmp))
@@ -140,21 +140,21 @@ bool				Channel::isSpeaker(const User &user) const
 
 bool				Channel::containsNickname(const std::string &nickname) const
 {
-	std::map<const User *, time_t>::const_iterator	beg = users.begin();
-	std::map<const User *, time_t>::const_iterator	end = users.end();
+	std::vector<const User *>::const_iterator	beg = users.begin();
+	std::vector<const User *>::const_iterator	end = users.end();
 	for (; beg != end; ++beg)
-		if ((*beg).first->getNickname() == nickname)
+		if ((*beg)->getNickname() == nickname)
 			return (true);
 	return (false);
 }
 
 void				Channel::connect(const User &user, const std::string &key)
 {
-	if (flags & PRIVATE && key != pass)
+	if ((flags & PRIVATE) && key != pass)
 		sendError(user, ERR_BADCHANNELKEY, name);
 	else if (userLimit != 0 && users.size() >= userLimit)
 		sendError(user, ERR_CHANNELISFULL, name);
-	else if (flags & INVITEONLY && !isInvited(user))
+	else if ((flags & INVITEONLY) && !isInvited(user))
 		sendError(user, ERR_INVITEONLYCHAN, name);
 	else
 	{
@@ -166,12 +166,13 @@ void				Channel::connect(const User &user, const std::string &key)
 				return ;
 			}
 		}
-		std::map<const User *, time_t>::iterator	begin = users.begin();
-		std::map<const User *, time_t>::iterator	end = users.end();
+		std::vector<const User *>::iterator	begin = users.begin();
+		std::vector<const User *>::iterator	end = users.end();
 		for (; begin != end; ++begin)
-			if ((*begin).first->getPrefix() == user.getPrefix())
+			if ((*begin)->getPrefix() == user.getPrefix())
 				return ;
-		users[&user] = time(0);
+		users.push_back(&user);
+		removeInvited(user);
 		sendInfo(user);
 	}
 }
@@ -190,10 +191,10 @@ void				Channel::sendMessage(const std::string &message, const User &from)
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
-		std::map<const User *, time_t>::iterator	begin = users.begin();
-		std::map<const User *, time_t>::iterator	end = users.end();
+	std::vector<const User *>::iterator	begin = users.begin();
+	std::vector<const User *>::iterator	end = users.end();
 	for (; begin != end; ++begin)
-		(*begin).first->sendMessage(msg);
+		(*begin)->sendMessage(msg);
 }
 
 void				Channel::invite(const User &user, const User &receiver)
@@ -264,4 +265,30 @@ void				Channel::removeBanMask(const std::string &mask)
 			break ;
 	banMasks.erase(it);
 	
+}
+
+void				Channel::disconnect(const User &user)
+{
+	removeOperator(user);
+	removeSpeaker(user);
+	std::vector<const User *>::iterator	begin = users.begin();
+	std::vector<const User *>::iterator	end = users.end();
+	for (; begin != end; ++begin)
+		if (*begin == &user)
+			break ;
+	users.erase(begin);
+	if (operators.size() == 0 && users.size() > 0)
+		operators.push_back(users[0]);
+}
+
+void				Channel::removeInvited(const User &user)
+{
+	if (isInvited(user))
+	{
+		std::vector<const User *>::const_iterator	it = invitedUsers.begin();
+		for (; it != invitedUsers.end(); ++it)
+			if (*it == &user)
+				break ;
+		invitedUsers.erase(it);
+	}
 }

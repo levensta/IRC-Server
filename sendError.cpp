@@ -1,6 +1,6 @@
 #include "sendError.hpp"
 
-void	sendError(const User &user, int err, const std::string &arg1, const std::string &arg2)
+int		sendError(const User &user, int err, const std::string &arg1, const std::string &arg2)
 {
 	std::string	msg = ":" + user.getServername() + " ";
 	msg += std::to_string(err) + " " + user.getNickname();
@@ -143,4 +143,5 @@ void	sendError(const User &user, int err, const std::string &arg1, const std::st
 		break;
 	}
 	send(user.getSockfd(), msg.c_str(), msg.size(), 0);
+	return (-1);
 }

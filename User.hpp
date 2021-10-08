@@ -24,7 +24,6 @@ class Channel;
 enum Role
 {
 	client,
-	ChanelOperator,
 	IrcOperator,
 };
 
@@ -36,6 +35,10 @@ class User
 		bool							enterNickname;
 		bool							registered;
 		bool							away;
+		bool							invisible;
+		bool							receiveNotice;
+		bool							receiveWallops;
+		Role							role;
 		std::string						password;
 		std::string						nickname;
 		std::string						username;
@@ -45,7 +48,6 @@ class User
 		std::string						awayMessage;
 		int								sockfd;
 		std::queue<std::string>			messages;
-		Role							role;
 		std::vector<Channel *>			channels;
 
 		Channel							*getChanByName(const std::string &name);
@@ -66,9 +68,11 @@ class User
 		void							topicCmd(const Message &msg);
 		void							namesCmd(const Message &msg);
 		void							kickCmd(const Message &msg);
+		int								partCmd(const Message &msg);
 
 		int								checkConnection();
-		void							handelChanFlags(const Message &msg);
+		int								handleChanFlags(const Message &msg);
+		int								handleUserFlags(const Message &msg);
 
 		User();
 		User(const User& copy);
@@ -77,17 +81,21 @@ class User
 		User(int sockfd, Server &server);
 		~User();
 
-		const int						&getSockfd() const;
+		int								getSockfd() const;
 		const std::string				&getNickname() const;
 		const std::string				&getServername() const;
 		std::string						getPrefix() const;
 		const std::string				&getAwayMessage() const;
 		bool							isAway() const;
+		bool							isInvisible() const;
+		bool							isReceiveNotice() const;
+		bool							isReceiveWallops() const;
 
 		void							readMessage();
 		std::vector<std::string>		parseCommand();
 		int								hadleMessages();
 		void							sendMessage(const std::string &msg) const;
+		void							removeChannel(const std::string &name);
 };
 
 #endif

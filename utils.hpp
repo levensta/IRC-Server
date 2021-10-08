@@ -4,7 +4,6 @@
 # include <queue>
 # include <string>
 # include <algorithm>
-# include <initializer_list>
 
 bool						newLine(char c, char sep);
 bool						notNewLine(char c, char sep);

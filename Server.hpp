@@ -36,6 +36,7 @@ class Server
 		Server();
 		Server(const Server& copy);
 		Server	&operator=(const Server& other);
+		void									closeAllConnections();
 	public:
 		Server(int port, const std::string &password);
 		~Server();
@@ -45,7 +46,6 @@ class Server
 		const std::string						&getServername() const;
 		std::map<std::string, Channel *>		&getChannels();
 		const std::vector<User *>				&getUsers() const;
-		const User								*getUserByName(const std::string &name);
 		const std::vector<User *>				&getConnectedUsers() const;
 		bool									containsNickname(const std::string &nickname) const;
 		bool									containsChannel(const std::string &name) const;
@@ -58,6 +58,8 @@ class Server
 		void									sendMOTD(const User &user) const;
 		int										connectToChannel(const User &user, const std::string &name, const std::string &key);
 		void									inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName);
+		User									*getUserByName(const std::string &name);
+		void									disconnectUser(const std::string &nickname);
 };
 
 #endif

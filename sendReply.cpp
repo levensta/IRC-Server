@@ -59,7 +59,7 @@ void	sendReply(const std::string &from, const User &user, int rpl, \
 		msg += ":End of /LIST\n";
 		break;
 	case RPL_CHANNELMODEIS:
-		msg += arg1 + " " + arg2 + " " + arg3 + "\n";
+		msg += arg1 + " +" + arg2 + "\n";
 		break;
 	case RPL_NOTOPIC:
 		msg += arg1 + " :No topic is set\n";

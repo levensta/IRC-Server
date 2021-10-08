@@ -3,6 +3,15 @@
 #include <fcntl.h>
 #include "User.hpp"
 #include "Server.hpp"
+#include <csignal>
+
+bool	work = true;
+
+void	sigHandler(int signum)
+{
+	(void)signum;
+	work = false;
+}
 
 int main(int argc, char **argv)
 {
@@ -32,20 +41,14 @@ int main(int argc, char **argv)
 	server.listenSocket();
 
 	fcntl(server.getSockfd(), F_SETFL, O_NONBLOCK);
-	fcntl(1, F_SETFL, O_NONBLOCK);
 
-	while (1)
+	signal(SIGINT, sigHandler);
+
+	while (work)
 	{
-		char	command[20];
-		command[0] = 0;
-		command[read(1, command, 19)] = 0;
-		if (std::string(command) == "stop\n")
-			break;
-
 		// Grab a connection from the queue
 		server.grabConnection();
 
 		server.processMessages();
 	}
-	close(server.getSockfd());
 }

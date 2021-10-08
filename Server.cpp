@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
 Server::Server(int port, const std::string &password) :
-port(port), timeout(20), password(password), name("IRCat")
+port(port), timeout(1), password(password), name("IRCat")
 {
 	// Read MOTD
 	std::string		line;
@@ -15,7 +15,16 @@ port(port), timeout(20), password(password), name("IRCat")
 }
 
 Server::~Server()
-{}
+{
+	closeAllConnections();
+	std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
+	std::map<std::string, Channel *>::const_iterator	end = channels.end();
+	for (; beg != end; ++beg)
+	{
+		delete (*beg).second;
+	}
+	close(sockfd);
+}
 
 const int	&Server::getSockfd() const
 {
@@ -42,7 +51,7 @@ const std::vector<User *>				&Server::getUsers() const
 	return (connectedUsers);
 }
 
-const User								*Server::getUserByName(const std::string &name)
+User									*Server::getUserByName(const std::string &name)
 {
 	User	*ret;
 	size_t	usersCount = connectedUsers.size();
@@ -92,6 +101,12 @@ void									Server::createSocket()
 
 void									Server::bindSocket()
 {
+	const int trueFlag = 1;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &trueFlag, sizeof(int)) < 0)
+	{
+		std::cout << "setsockopt failed" << std::endl;
+		exit(EXIT_FAILURE);
+	}
 	sockaddr.sin_family = AF_INET;
 	sockaddr.sin_addr.s_addr = INADDR_ANY;
 	sockaddr.sin_port = htons(port); // htons is necessary to convert a number to network byte order
@@ -148,6 +163,7 @@ void									Server::processMessages()
 		{
 			size_t	pos = toErase[i];
 			close(connectedUsers[pos]->getSockfd());
+			delete connectedUsers[pos];
 			connectedUsers.erase(connectedUsers.begin() + pos);
 			userFDs.erase(userFDs.begin() + pos);
 		}
@@ -173,7 +189,7 @@ int										Server::connectToChannel(const User &user, const std::string &name,
 	{
 		Channel	*tmp = channels.at(name);
 		tmp->connect(user, key);
-		return (0);
+		return (1);
 	}
 	catch(const std::exception& e)
 	{
@@ -193,4 +209,13 @@ void									Server::inviteToChannel(const User &user, const std::string &nickna
 		sendError(user, ERR_USERONCHANNEL, nickname, name);
 	else
 		chan->invite(user, *receiver);
+}
+
+void									Server::closeAllConnections()
+{
+	for (size_t i = 0; i < connectedUsers.size(); ++i)
+	{
+		close(connectedUsers[i]->getSockfd());
+		delete connectedUsers[i];
+	}
 }

@@ -26,7 +26,7 @@ class Channel
 		unsigned short					userLimit;
 		std::vector<std::string>		banMasks;
 		unsigned char					flags;
-		std::map<const User *, time_t>	users;
+		std::vector<const User *>		users;
 		std::string						topic;
 		std::vector<const User *>		invitedUsers;
 
@@ -64,6 +64,8 @@ class Channel
 		void							removeBanMask(const std::string &mask);
 		void							displayTopic(const User &user);
 		void							displayNames(const User &user);
+		void							disconnect(const User &user);
+		void							removeInvited(const User &user);
 };
 
 #endif
