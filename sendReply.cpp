@@ -53,7 +53,7 @@ void	sendReply(const std::string &from, const User &user, int rpl, \
 		msg += "Channel :Users  Name\n";
 		break;
 	case RPL_LIST:
-		msg += arg1 + " :" + arg2 + "\n";
+		msg += arg1 +  " " + arg2 + " :" + arg3 + "\n";
 		break;
 	case RPL_LISTEND:
 		msg += ":End of /LIST\n";

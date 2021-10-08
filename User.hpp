@@ -46,6 +46,7 @@ class User
 		std::string						servername;
 		std::string						realname;
 		std::string						awayMessage;
+		std::string						quitMessage;
 		int								sockfd;
 		std::queue<std::string>			messages;
 		std::vector<Channel *>			channels;
@@ -69,6 +70,7 @@ class User
 		void							namesCmd(const Message &msg);
 		void							kickCmd(const Message &msg);
 		int								partCmd(const Message &msg);
+		void							listCmd(const Message &msg);
 
 		int								checkConnection();
 		int								handleChanFlags(const Message &msg);

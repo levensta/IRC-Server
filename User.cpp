@@ -9,7 +9,20 @@ invisible(false), receiveNotice(true), receiveWallops(true), role(client), sockf
 }
 
 User::~User()
-{}
+{
+	std::vector<Channel *>::const_iterator	beg = channels.begin();
+	std::vector<Channel *>::const_iterator	end = channels.end();
+	std::string	msg;
+	if (quitMessage.size() == 0)
+		msg = "Client exited";
+	else
+		msg = quitMessage;
+	for (; beg != end; ++beg)
+	{
+		(*beg)->sendMessage("QUIT :" + msg + "\n", *this);
+		(*beg)->disconnect(*this);
+	}
+}
 
 int							User::getSockfd() const
 {
@@ -72,7 +85,7 @@ void						User::readMessage()
 		text = messages.front();
 	char buffer[100];
 	int bytesRead;
-	while ((bytesRead = read(sockfd, buffer, 99)) > 0)
+	while ((bytesRead = recv(sockfd, buffer, 99, 0)) > 0)
 	{
 		buffer[bytesRead] = 0;
 		text += buffer;
@@ -235,7 +248,7 @@ void 						User::privmsgCmd(const Message &msg)
 					return ;
 				}
 				// check that the current user is in the channel
-				if (this->server->getChannels()[receivers.front()]->containsNickname(this->nickname))
+				if (!this->server->getChannels()[receivers.front()]->containsNickname(this->nickname))
 				{
 					sendError(*this, ERR_CANNOTSENDTOCHAN, receivers.front());
 					return ;
@@ -259,7 +272,7 @@ void 						User::privmsgCmd(const Message &msg)
 				if (receiverChannel->getFlags() & MODERATED && (!receiverChannel->isOperator(*this) && !receiverChannel->isSpeaker(*this)))
 					sendError(*this, ERR_CANNOTSENDTOCHAN, *it);
 				else
-					receiverChannel->sendMessage(msg.getParams()[1] + "\n", *this);
+					receiverChannel->sendMessage(msg.getCommand() + " " + *it + " :" + msg.getParams()[1] + "\n", *this);
 			}
 			else
 			{
@@ -480,18 +493,7 @@ void						User::modeCmd(const Message &msg)
 			else if (msg.getParams().size() == 1)
 			{
 				Channel	*chan = server->getChannels().at(msg.getParams()[0]);
-				std::string	flags;
-				if (chan->getFlags() & INVITEONLY)
-					flags += "i";
-				if (chan->getFlags() & NOMSGOUT)
-					flags += "n";
-				if (chan->getFlags() & PRIVATE)
-					flags += "p";
-				if (chan->getFlags() & SECRET)
-					flags += "s";
-				if (chan->getFlags() & TOPICSET)
-					flags += "t";
-				sendReply(servername, *this, RPL_CHANNELMODEIS, msg.getParams()[0], flags);
+				sendReply(servername, *this, RPL_CHANNELMODEIS, msg.getParams()[0], chan->getFlagsAsString());
 			}
 			else if (handleChanFlags(msg) != -1)
 				server->getChannels().at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n", *this);
@@ -646,6 +648,34 @@ int							User::partCmd(const Message &msg)
 	return 0;
 }
 
+void						User::listCmd(const Message &msg)
+{
+	std::queue<std::string>	chans;
+	std::vector<std::string>	chansToDisplay;
+	std::map<std::string, Channel *>	existingChans = server->getChannels();
+	if (msg.getParams().size() > 0)
+	{
+		chans = split(msg.getParams()[0], ',', false);
+		while (chans.size() > 0)
+		{
+			if (server->containsChannel(chans.front()))
+				chansToDisplay.push_back(chans.front());
+			chans.pop();
+		}
+	}
+	else
+	{
+		std::map<std::string, Channel *>::const_iterator	beg = existingChans.begin();
+		std::map<std::string, Channel *>::const_iterator	end = existingChans.end();
+		for (; beg != end; ++beg)
+			chansToDisplay.push_back((*beg).first);
+	}
+	sendReply(servername, *this, RPL_LISTSTART);
+	for (size_t i = 0; i < chansToDisplay.size(); ++i)
+		existingChans.at(chansToDisplay[i])->displayChanInfo(*this);
+	sendReply(servername, *this, RPL_LISTEND);
+}
+
 int							User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front()[messages.front().size() - 1] == '\n')
@@ -656,7 +686,11 @@ int							User::hadleMessages()
 		logMessage(msg);
 		// handle
 		if (msg.getCommand() == "QUIT")
+		{
+			if (msg.getParams().size() > 0)
+				quitMessage = msg.getParams()[0];
 			return (-1);
+		}
 		else if (!registered)
 		{
 			if (msg.getCommand() == "PASS")
@@ -697,6 +731,8 @@ int							User::hadleMessages()
 				this->kickCmd(msg);
 			else if (msg.getCommand() == "PART")
 				this->partCmd(msg);
+			else if (msg.getCommand() == "LIST")
+				this->listCmd(msg);
 		}
 	}
 	return (0);

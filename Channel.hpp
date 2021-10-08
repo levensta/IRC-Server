@@ -49,6 +49,7 @@ class Channel
 		bool							isInvited(const User &user) const;
 		bool							isOperator(const User &user) const;
 		bool							isSpeaker(const User &user) const;
+		bool							isEmpty() const;
 		bool							containsNickname(const std::string &nickname) const;
 
 		void							connect(const User &user, const std::string &key);
@@ -66,6 +67,8 @@ class Channel
 		void							displayNames(const User &user);
 		void							disconnect(const User &user);
 		void							removeInvited(const User &user);
+		void							displayChanInfo(const User &user);
+		std::string						getFlagsAsString();
 };
 
 #endif

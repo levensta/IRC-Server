@@ -167,6 +167,19 @@ void									Server::processMessages()
 			connectedUsers.erase(connectedUsers.begin() + pos);
 			userFDs.erase(userFDs.begin() + pos);
 		}
+		// Delete empty channels
+		std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
+		std::map<std::string, Channel *>::const_iterator	end = channels.end();
+		for (; beg != end;)
+		{
+			if ((*beg).second->isEmpty())
+			{
+				channels.erase(beg);
+				beg = channels.begin();
+			}
+			else
+				++beg;
+		}
 	}
 }
 

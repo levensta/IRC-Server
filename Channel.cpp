@@ -138,6 +138,13 @@ bool				Channel::isSpeaker(const User &user) const
 	return false;
 }
 
+bool				Channel::isEmpty() const
+{
+	if (users.size() == 0)
+		return true;
+	return false;
+}
+
 bool				Channel::containsNickname(const std::string &nickname) const
 {
 	std::vector<const User *>::const_iterator	beg = users.begin();
@@ -291,4 +298,36 @@ void				Channel::removeInvited(const User &user)
 				break ;
 		invitedUsers.erase(it);
 	}
+}
+
+std::string			Channel::getFlagsAsString()
+{
+	std::string	ret;
+	if (flags & INVITEONLY)
+		ret += "i";
+	if (flags & NOMSGOUT)
+		ret += "n";
+	if (flags & PRIVATE)
+		ret += "p";
+	if (flags & SECRET)
+		ret += "s";
+	if (flags & TOPICSET)
+		ret += "t";
+	return ret;
+}
+
+void				Channel::displayChanInfo(const User &user)
+{
+	std::string	chanName = "";
+	std::string	info = "";
+	if ((flags & SECRET) && !containsNickname(user.getNickname()))
+		return ;
+	if ((flags & PRIVATE) && !containsNickname(user.getNickname()))
+		chanName = "*";
+	else
+	{
+		chanName = name;
+		info = "[+" + getFlagsAsString() + "] " + topic;
+	}
+	sendReply(user.getServername(), user, RPL_LIST, chanName, std::to_string(users.size()), info);
 }
