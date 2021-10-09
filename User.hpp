@@ -1,25 +1,25 @@
-#ifndef USER_HPP
-# define USER_HPP
+#pragma once
 
 class Server;
 class Message;
 class Channel;
 
-# include <string>
-# include <iostream>
-# include <sstream>
-# include <unistd.h>
-# include <vector>
-# include <queue>
-# include <set>
-# include <sys/socket.h>
-# include <algorithm>
-# include <fcntl.h>
-# include "utils.hpp"
-# include "Message.hpp"
-# include "Server.hpp"
-# include "Channel.hpp"
-# include "sendError.hpp"
+#include <string>
+#include <time.h>
+#include <iostream>
+#include <sstream>
+#include <unistd.h>
+#include <vector>
+#include <queue>
+#include <set>
+#include <sys/socket.h>
+#include <algorithm>
+#include <fcntl.h>
+#include "utils.hpp"
+#include "Message.hpp"
+#include "Server.hpp"
+#include "Channel.hpp"
+#include "sendError.hpp"
 
 enum Role
 {
@@ -39,6 +39,7 @@ class User
 		bool							receiveNotice;
 		bool							receiveWallops;
 		Role							role;
+		time_t							registrationTime;
 		std::string						password;
 		std::string						nickname;
 		std::string						username;
@@ -61,9 +62,11 @@ class User
 		int								nickCmd(const Message &msg);
 		int								userCmd(const Message &msg);
 		void							joinCmd(const Message &msg);
-		void 							privmsgCmd(const Message &msg);
+		int								privmsgCmd(const Message &msg);
 		void							awayCmd(const Message &msg);
 		void							noticeCmd(const Message &msg);
+		int								whoCmd(const Message &msg);
+		int								whoisCmd(const Message &msg);
 		void							inviteCmd(const Message &msg);
 		void							modeCmd(const Message &msg);
 		void							topicCmd(const Message &msg);
@@ -84,10 +87,16 @@ class User
 		~User();
 
 		int								getSockfd() const;
-		const std::string				&getNickname() const;
+		const std::string				&getUsername() const;
+		const std::string				&getHostname() const;
 		const std::string				&getServername() const;
+		const std::string				&getNickname() const;
+		const std::string				&getRealname() const;
+		const std::vector<Channel *>	&getChannels() const;
 		std::string						getPrefix() const;
 		const std::string				&getAwayMessage() const;
+		const time_t					&getRegistrationTime() const;
+		const Role						&getRole() const;
 		bool							isAway() const;
 		bool							isInvisible() const;
 		bool							isReceiveNotice() const;
@@ -99,5 +108,3 @@ class User
 		void							sendMessage(const std::string &msg) const;
 		void							removeChannel(const std::string &name);
 };
-
-#endif

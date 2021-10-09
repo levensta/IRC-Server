@@ -1,9 +1,8 @@
-#ifndef MESSAGE_HPP
-# define MESSAGE_HPP
+#pragma once
 
-# include <string>
-# include <vector>
-# include "utils.hpp"
+#include <string>
+#include <vector>
+#include "utils.hpp"
 
 class Message
 {
@@ -22,5 +21,3 @@ class Message
 		const std::string				&getCommand() const;
 		const std::vector<std::string>	&getParams() const;
 };
-
-#endif

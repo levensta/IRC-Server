@@ -1,20 +1,20 @@
-#ifndef CHANNEL_HPP
-# define CHANNEL_HPP
+#pragma once
 
 class User;
 
-# include <string>
-# include <vector>
-# include <map>
-# include <ctime>
-# include "User.hpp"
+#include <string>
+#include <vector>
+#include <map>
+#include <ctime>
+#include "User.hpp"
+#include "utils.hpp"
 
-# define PRIVATE	0b000001
-# define SECRET		0b000010
-# define MODERATED	0b000100
-# define INVITEONLY	0b001000
-# define TOPICSET	0b010000
-# define NOMSGOUT	0b100000
+#define PRIVATE		0b000001
+#define SECRET		0b000010
+#define MODERATED	0b000100
+#define INVITEONLY	0b001000
+#define TOPICSET	0b010000
+#define NOMSGOUT	0b100000
 
 class Channel
 {
@@ -55,7 +55,7 @@ class Channel
 		void							connect(const User &user, const std::string &key);
 		void							setFlag(unsigned char flag);
 		void							removeFlag(unsigned char flag);
-		void							sendMessage(const std::string &message, const User &from);
+		void							sendMessage(const std::string &message, const User &from, bool includeUser);
 		void							invite(const User &user, const User &receiver);
 		void							addOperator(const User &user);
 		void							removeOperator(const User &user);
@@ -70,5 +70,3 @@ class Channel
 		void							displayChanInfo(const User &user);
 		std::string						getFlagsAsString();
 };
-
-#endif

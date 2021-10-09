@@ -31,27 +31,32 @@ const int	&Server::getSockfd() const
 	return (sockfd);
 }
 
-const std::string						&Server::getPassword() const
+const std::string	&Server::getPassword() const
 {
 	return (password);
 }
 
-const std::string						&Server::getServername() const
+const std::string	&Server::getServername() const
 {
 	return (name);
 }
 
-std::map<std::string, Channel *>		&Server::getChannels()
+const std::string	&Server::getInfo() const
+{
+	return (info);
+}
+
+std::map<std::string, Channel *>	&Server::getChannels()
 {
 	return (channels);
 }
 
-const std::vector<User *>				&Server::getUsers() const
+const std::vector<User *>	&Server::getUsers() const
 {
 	return (connectedUsers);
 }
 
-User									*Server::getUserByName(const std::string &name)
+User	*Server::getUserByName(const std::string &name)
 {
 	User	*ret;
 	size_t	usersCount = connectedUsers.size();
@@ -72,12 +77,12 @@ bool									Server::containsNickname(const std::string &nickname) const
 	return (false);
 }
 
-const std::vector<User *>		&Server::getConnectedUsers() const
+const std::vector<User *>	&Server::getConnectedUsers() const
 {
 	return (connectedUsers);
 }
 
-bool									Server::containsChannel(const std::string &name) const
+bool	Server::containsChannel(const std::string &name) const
 {
 	try
 	{
@@ -89,7 +94,7 @@ bool									Server::containsChannel(const std::string &name) const
 	return false;
 }
 
-void									Server::createSocket()
+void	Server::createSocket()
 {
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -99,7 +104,7 @@ void									Server::createSocket()
 	}
 }
 
-void									Server::bindSocket()
+void	Server::bindSocket()
 {
 	const int trueFlag = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &trueFlag, sizeof(int)) < 0)
@@ -117,7 +122,7 @@ void									Server::bindSocket()
 	}
 }
 
-void									Server::listenSocket()
+void	Server::listenSocket()
 {
 	if (listen(sockfd, 128) < 0)
 	{
@@ -126,7 +131,7 @@ void									Server::listenSocket()
 	}
 }
 
-void									Server::grabConnection()
+void	Server::grabConnection()
 {
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
@@ -141,7 +146,7 @@ void									Server::grabConnection()
 	}
 }
 
-void									Server::processMessages()
+void	Server::processMessages()
 {
 	int	pret = poll(userFDs.data(), userFDs.size(), timeout);
 	std::vector<int>	toErase;
@@ -183,7 +188,7 @@ void									Server::processMessages()
 	}
 }
 
-void									Server::sendMOTD(const User &user) const
+void	Server::sendMOTD(const User &user) const
 {
 	if (motd.size() == 0)
 		sendError(user, ERR_NOMOTD);
@@ -196,7 +201,7 @@ void									Server::sendMOTD(const User &user) const
 	}
 }
 
-int										Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
+int		Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
 {
 	try
 	{
@@ -211,7 +216,7 @@ int										Server::connectToChannel(const User &user, const std::string &name,
 	return (1);
 }
 
-void									Server::inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName)
+void	Server::inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName)
 {
 	User	*receiver;
 	for (size_t i = 0; i < connectedUsers.size(); ++i)
@@ -224,7 +229,7 @@ void									Server::inviteToChannel(const User &user, const std::string &nickna
 		chan->invite(user, *receiver);
 }
 
-void									Server::closeAllConnections()
+void	Server::closeAllConnections()
 {
 	for (size_t i = 0; i < connectedUsers.size(); ++i)
 	{

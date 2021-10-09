@@ -2,7 +2,7 @@
 
 User::User(int sockfd, Server &server) :
 enterUsername(false), enterNickname(false), registered(false), away(false),
-invisible(false), receiveNotice(true), receiveWallops(true), role(client), sockfd(sockfd)
+invisible(false), receiveNotice(true), receiveWallops(true), role(client), registrationTime(time(0)), sockfd(sockfd)
 {
 	this->server = &server;
 	(void)role;
@@ -19,52 +19,82 @@ User::~User()
 		msg = quitMessage;
 	for (; beg != end; ++beg)
 	{
-		(*beg)->sendMessage("QUIT :" + msg + "\n", *this);
+		(*beg)->sendMessage("QUIT :" + msg + "\n", *this, true);
 		(*beg)->disconnect(*this);
 	}
 }
 
-int							User::getSockfd() const
+int		User::getSockfd() const
 {
 	return sockfd;
 }
 
-const std::string			&User::getNickname() const
+const std::string	&User::getUsername() const
 {
-	return nickname;
+	return username;
 }
 
-const std::string			&User::getServername() const
+const std::string	&User::getHostname() const
+{
+	return hostname;
+}
+
+const std::string	&User::getServername() const
 {
 	return servername;
 }
 
-std::string					User::getPrefix() const
+const std::string	&User::getNickname() const
+{
+	return nickname;
+}
+
+const std::string	&User::getRealname() const
+{
+	return realname;
+}
+
+std::string	User::getPrefix() const
 {
 	return std::string(nickname + "!" + username + "@" + hostname);
 }
 
-const std::string			&User::getAwayMessage() const
+const std::string	&User::getAwayMessage() const
 {
-	return (awayMessage);
+	return awayMessage;
 }
 
-bool						User::isAway() const
+const time_t	&User::getRegistrationTime() const
+{
+	return registrationTime;
+}
+
+const Role	&User::getRole() const
+{
+	return role;
+}
+
+const std::vector<Channel *>	&User::getChannels() const
+{
+	return channels;
+}
+
+bool	User::isAway() const
 {
 	return away;
 }
 
-bool						User::isInvisible() const
+bool	User::isInvisible() const
 {
 	return invisible;
 }
 
-bool						User::isReceiveNotice() const
+bool	User::isReceiveNotice() const
 {
 	return receiveNotice;
 }
 
-bool						User::isReceiveWallops() const
+bool	User::isReceiveWallops() const
 {
 	return receiveNotice;
 }
@@ -78,7 +108,7 @@ Channel						*User::getChanByName(const std::string &name)
 	return ret;
 }
 
-void						User::readMessage()
+void	User::readMessage()
 {
 	std::string	text;
 	if (messages.size() > 0)
@@ -99,7 +129,7 @@ void						User::readMessage()
 		messages = split(text, '\n', true);
 }
 
-void						logMessage(const Message &msg)
+void	logMessage(const Message &msg)
 {
 	std::cout << std::endl << "prefix = " << msg.getPrefix() << ", command = " << msg.getCommand();
 	std::cout << ", paramsCount = " << msg.getParams().size() << std::endl;
@@ -117,7 +147,7 @@ void						logMessage(const Message &msg)
 	std::cout << std::endl;
 }
 
-bool						User::isValidNick(const std::string &nick) const
+bool	User::isValidNick(const std::string &nick) const
 {
 	std::string	special = "-[]\\`^{}";
 	for (size_t i = 0; i < nick.size(); i++)
@@ -132,7 +162,7 @@ bool						User::isValidNick(const std::string &nick) const
 	return (true);
 }
 
-bool						User::isValidChannelName(const std::string &name) const
+bool	User::isValidChannelName(const std::string &name) const
 {
 	if (name[0] != '#' && name[0] != '&')
 		return false;
@@ -145,7 +175,7 @@ bool						User::isValidChannelName(const std::string &name) const
 	return true;
 }
 
-bool						User::isOnChannel(const std::string &name) const
+bool	User::isOnChannel(const std::string &name) const
 {
 	for (size_t i = 0; i < channels.size(); i++)
 		if (channels[i]->getName() == name)
@@ -153,7 +183,7 @@ bool						User::isOnChannel(const std::string &name) const
 	return false;
 }
 
-int							User::checkConnection()
+int		User::checkConnection()
 {
 	if (enterNickname && enterUsername)
 	{
@@ -171,7 +201,7 @@ int							User::checkConnection()
 	return (0);
 }
 
-void						User::passCmd(const Message &msg)
+void	User::passCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
 		sendError(*this, ERR_NEEDMOREPARAMS, "PASS");
@@ -181,7 +211,7 @@ void						User::passCmd(const Message &msg)
 		password = msg.getParams()[0];
 }
 
-int							User::nickCmd(const Message &msg)
+int		User::nickCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
 		sendError(*this, ERR_NEEDMOREPARAMS, "NICK");
@@ -197,7 +227,7 @@ int							User::nickCmd(const Message &msg)
 	return (checkConnection());
 }
 
-int							User::userCmd(const Message &msg)
+int		User::userCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 4)
 		sendError(*this, ERR_NEEDMOREPARAMS, "USER");
@@ -214,77 +244,66 @@ int							User::userCmd(const Message &msg)
 	return (checkConnection());
 }
 
-void 						User::privmsgCmd(const Message &msg)
+int 						User::privmsgCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
-		sendError(*this, ERR_NORECIPIENT, msg.getCommand());
-	else if (msg.getParams().size() == 1)
-		sendError(*this, ERR_NOTEXTTOSEND);
-	else
+		return (sendError(*this, ERR_NORECIPIENT, msg.getCommand()));
+	if (msg.getParams().size() == 1)
+		return (sendError(*this, ERR_NOTEXTTOSEND));
+
+	std::queue<std::string> receivers = split(msg.getParams()[0], ',', false);
+	std::set<std::string> uniqReceivers;
+
+	if (msg.getCommand() == "NOTICE" && (receivers.size() > 1 \
+	|| receivers.front()[0] == '#' || receivers.front()[0] == '&'))
+		return (sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]));
+
+	while (receivers.size() > 0)
 	{
-		std::queue<std::string> receivers = split(msg.getParams()[0], ',', false);
-		std::set<std::string> uniqReceivers;
-		if (msg.getCommand() == "NOTICE" && (receivers.size() > 1 \
-		|| receivers.front()[0] == '#' || receivers.front()[0] == '&'))
+		// checking if there contains dublicate receiver
+		if (uniqReceivers.find(receivers.front()) != uniqReceivers.end())
+			return (sendError(*this, ERR_TOOMANYTARGETS, receivers.front()));
+		// if receiver is channel
+		if (receivers.front()[0] == '#' || receivers.front()[0] == '&')
 		{
-			sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]);
-			return ;
+			// checking if there such a channel 
+			if (!this->server->containsChannel(receivers.front()))
+				return (sendError(*this, ERR_NOSUCHNICK, receivers.front()));
+			// check that the current user is in the channel
+			if (!this->server->getChannels()[receivers.front()]->containsNickname(this->nickname))
+				return (sendError(*this, ERR_CANNOTSENDTOCHAN, receivers.front()));
 		}
-		while (receivers.size() > 0)
+		// checking if there such a nickname 
+		else if (!this->server->containsNickname(receivers.front()))
+			return (sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]));
+		uniqReceivers.insert(receivers.front());
+		receivers.pop();
+	}
+	for (std::set<std::string>::iterator it = uniqReceivers.begin(); it != uniqReceivers.end(); ++it)
+	{
+		if ((*it)[0] == '#' || (*it)[0] == '&')
 		{
-			// checking if there contains dublicate receiver
-			if (uniqReceivers.find(receivers.front()) != uniqReceivers.end())
-			{
-				sendError(*this, ERR_TOOMANYTARGETS, receivers.front());
-				return ;
-			}
-			// if receiver is channel
-			if (receivers.front()[0] == '#' || receivers.front()[0] == '&')
-			{
-				// checking if there such a channel 
-				if (!this->server->containsChannel(receivers.front()))
-				{
-					sendError(*this, ERR_NOSUCHNICK, receivers.front());
-					return ;
-				}
-				// check that the current user is in the channel
-				if (!this->server->getChannels()[receivers.front()]->containsNickname(this->nickname))
-				{
-					sendError(*this, ERR_CANNOTSENDTOCHAN, receivers.front());
-					return ;
-				}
-			}
-			// checking if there such a nickname 
-			else if (!this->server->containsNickname(receivers.front()))
-			{
-				sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]);
-				return ;
-			}
-			uniqReceivers.insert(receivers.front());
-			receivers.pop();
-		}
-		for (std::set<std::string>::iterator it = uniqReceivers.begin(); it != uniqReceivers.end(); ++it)
-		{
-			if ((*it)[0] == '#' || (*it)[0] == '&')
-			{
-				Channel *receiverChannel = this->server->getChannels()[*it];
-				// check that user can send message to channel (user is operator or speaker on moderated channel)
-				if (receiverChannel->getFlags() & MODERATED && (!receiverChannel->isOperator(*this) && !receiverChannel->isSpeaker(*this)))
-					sendError(*this, ERR_CANNOTSENDTOCHAN, *it);
-				else
-					receiverChannel->sendMessage(msg.getCommand() + " " + *it + " :" + msg.getParams()[1] + "\n", *this);
-			}
+			Channel *receiverChannel = this->server->getChannels()[*it];
+			// check that user can send message to channel (user is operator or speaker on moderated channel)
+			if (receiverChannel->getFlags() & MODERATED && (!receiverChannel->isOperator(*this) && !receiverChannel->isSpeaker(*this)))
+				sendError(*this, ERR_CANNOTSENDTOCHAN, *it);
 			else
-			{
-				if (msg.getCommand() == "PRIVMSG" && this->server->getUserByName(*it)->isAway())
-					sendReply(this->servername, *this, RPL_AWAY, *it, this->server->getUserByName(*it)->getAwayMessage()); 
+				receiverChannel->sendMessage(msg.getCommand() + " " + *it + " :" + msg.getParams()[1] + "\n", *this, false);
+		}
+		else
+		{
+			if (msg.getCommand() == "PRIVMSG" && this->server->getUserByName(*it)->isAway())
+				sendReply(this->servername, *this, RPL_AWAY, *it, this->server->getUserByName(*it)->getAwayMessage());
+			if (!(msg.getCommand() == "NOTICE" && !this->server->getUserByName(*it)->isReceiveNotice()))
 				this->server->getUserByName(*it)->sendMessage(":" + getPrefix() + " " + msg.getCommand() + " " + *it + " :" + msg.getParams()[1] + "\n");
-			}
+			// else
+			// 	sendError ?
 		}
 	}
+	return 0;
 }
 
-void						User::awayCmd(const Message &msg)
+void	User::awayCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
 	{
@@ -299,12 +318,96 @@ void						User::awayCmd(const Message &msg)
 	}
 }
 
-void						User::noticeCmd(const Message &msg)
+void	User::noticeCmd(const Message &msg)
 {
-	this->privmsgCmd(msg);
+		this->privmsgCmd(msg);
 }
 
-void						User::joinCmd(const Message &msg)
+int		User::whoCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		return (sendError(*this, ERR_NEEDMOREPARAMS, "WHO"));
+
+	std::vector<User *> users = this->server->getConnectedUsers();
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (isEqualToRegex(msg.getParams()[0], users[i]->getNickname()) && !users[i]->isInvisible())
+		{
+			std::string channelName = "*";
+			std::string userStatus = "";
+			std::vector<Channel *> userChannels = users[i]->getChannels();
+
+			for (int j = userChannels.size() - 1; j >= 0; --j)
+			{
+				if ((!(userChannels[j]->getFlags() & SECRET) && !(userChannels[j]->getFlags() & PRIVATE)) \
+				|| (userChannels[j]->containsNickname(this->nickname)))
+				{
+					channelName = userChannels[j]->getName();
+					if (userChannels[j]->isOperator(*(users[i])))
+						userStatus = "@";
+					else if (userChannels[j]->isSpeaker(*(users[i])))
+						userStatus = "+";
+					break;
+				}
+			}
+
+			if (msg.getParams().size() == 1  || msg.getParams()[1] != "o" \
+			|| (msg.getParams()[1] == "o" && users[i]->getRole() == IrcOperator))
+				sendReply(this->servername, *this, RPL_WHOREPLY, channelName, users[i]->getUsername(), users[i]->getHostname(), \
+							users[i]->getServername(), users[i]->getNickname(), "H" + userStatus, "0", users[i]->getRealname());
+		}
+	}
+	sendReply(this->servername, *this, RPL_ENDOFWHO, this->nickname);
+	return 0;
+}
+
+int		User::whoisCmd(const Message &msg)
+{
+	if (msg.getParams().size() == 0)
+		return (sendError(*this, ERR_NONICKNAMEGIVEN));
+	
+	bool suchNick = false;
+	std::vector<User *> users = this->server->getConnectedUsers();
+	for (size_t i = 0; i < users.size(); ++i)
+	{
+		if (isEqualToRegex(msg.getParams()[0], users[i]->getNickname()) && !users[i]->isInvisible())
+		{
+			sendReply(this->servername, *this, RPL_WHOISUSER, users[i]->getNickname(), users[i]->getUsername(), users[i]->getHostname(), users[i]->getRealname());
+
+			std::vector<Channel *> userChannels = users[i]->getChannels();
+			std::string	channelsList;
+			for (size_t j = 0; j < userChannels.size(); ++j)
+			{
+				if ((!(userChannels[j]->getFlags() & SECRET) && !(userChannels[j]->getFlags() & PRIVATE)) \
+				|| (userChannels[j]->containsNickname(this->nickname)))
+				{
+					if (j != 0)
+						channelsList += " ";
+					if (userChannels[j]->isOperator(*(users[i])))
+						channelsList += "@";
+					else if (userChannels[j]->isSpeaker(*(users[i])))
+						channelsList += "+";
+					channelsList += userChannels[j]->getName();
+				}
+			}
+			sendReply(this->servername, *this, RPL_WHOISCHANNELS, users[i]->getNickname(), channelsList);
+			sendReply(this->servername, *this, RPL_WHOISSERVER, users[i]->getNickname(), users[i]->getServername(), this->server->getInfo());
+			if (users[i]->isAway())
+				sendReply(this->servername, *this, RPL_AWAY, users[i]->getNickname(), users[i]->getAwayMessage());
+			if (users[i]->getRole() == IrcOperator)
+				sendReply(this->servername, *this, RPL_WHOISOPERATOR, users[i]->getNickname());
+			sendReply(this->servername, *this, RPL_WHOISIDLE, users[i]->getNickname(), \
+			std::to_string(time(0) - users[i]->getRegistrationTime()), std::to_string(users[i]->getRegistrationTime()));
+			suchNick = true;
+		}
+	}
+	if (!suchNick)
+		sendError(*this, ERR_NOSUCHNICK, msg.getParams()[0]);
+	sendReply(this->servername, *this, RPL_ENDOFWHOIS, msg.getParams()[0]);
+	return 0;
+}
+
+void	User::joinCmd(const Message &msg)
 {
 	if (msg.getParams().size() == 0)
 		sendError(*this, ERR_NEEDMOREPARAMS, "JOIN");
@@ -329,7 +432,7 @@ void						User::joinCmd(const Message &msg)
 	}
 }
 
-void						User::inviteCmd(const Message &msg)
+void	User::inviteCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 2)
 		sendError(*this, ERR_NEEDMOREPARAMS, "INVITE");
@@ -341,7 +444,7 @@ void						User::inviteCmd(const Message &msg)
 		server->inviteToChannel(*this, msg.getParams()[0], msg.getParams()[1]);
 }
 
-int							User::handleChanFlags(const Message &msg)
+int		User::handleChanFlags(const Message &msg)
 {
 	std::string	chanName = msg.getParams()[0];
 	std::string	flag = msg.getParams()[1];
@@ -452,7 +555,7 @@ int							User::handleChanFlags(const Message &msg)
 	return 0;
 }
 
-int							User::handleUserFlags(const Message &msg)
+int		User::handleUserFlags(const Message &msg)
 {
 	std::string	flag = msg.getParams()[1];
 	if (flag == "+i")
@@ -476,7 +579,7 @@ int							User::handleUserFlags(const Message &msg)
 	return 0;
 }
 
-void						User::modeCmd(const Message &msg)
+void	User::modeCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 1)
 		sendError(*this, ERR_NEEDMOREPARAMS, "MODE");
@@ -496,7 +599,7 @@ void						User::modeCmd(const Message &msg)
 				sendReply(servername, *this, RPL_CHANNELMODEIS, msg.getParams()[0], chan->getFlagsAsString());
 			}
 			else if (handleChanFlags(msg) != -1)
-				server->getChannels().at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n", *this);
+				server->getChannels().at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n", *this, true);
 		}
 		else
 		{
@@ -524,7 +627,7 @@ void						User::modeCmd(const Message &msg)
 	}
 }
 
-void						User::topicCmd(const Message &msg)
+void	User::topicCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 1)
 		sendError(*this, ERR_NEEDMOREPARAMS, "TOPIC");
@@ -542,7 +645,7 @@ void						User::topicCmd(const Message &msg)
 	}
 }
 
-void						User::namesCmd(const Message &msg)
+void	User::namesCmd(const Message &msg)
 {
 	std::map<std::string, Channel *>	chans = server->getChannels();
 	if (msg.getParams().size() == 0)
@@ -595,7 +698,7 @@ void						User::namesCmd(const Message &msg)
 	}
 }
 
-void						User::kickCmd(const Message &msg)
+void	User::kickCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 2)
 		sendError(*this, ERR_NEEDMOREPARAMS, "KICK");
@@ -615,13 +718,13 @@ void						User::kickCmd(const Message &msg)
 			message += msg.getParams()[2];
 		else
 			message += nickname;
-		chan->sendMessage(message + "\n", *this);
+		chan->sendMessage(message + "\n", *this, true);
 		chan->disconnect(*(server->getUserByName(msg.getParams()[1])));
 		server->getUserByName(msg.getParams()[1])->removeChannel(msg.getParams()[0]);
 	}
 }
 
-int							User::partCmd(const Message &msg)
+int		User::partCmd(const Message &msg)
 {
 	if (msg.getParams().size() < 1)
 		sendError(*this, ERR_NEEDMOREPARAMS, "PART");
@@ -640,7 +743,7 @@ int							User::partCmd(const Message &msg)
 		}
 		for (size_t i = 0; i < chansInVector.size(); ++i)
 		{
-			server->getChannels().at(chansInVector[i])->sendMessage("PART " + chansInVector[i] + "\n", *this);
+			server->getChannels().at(chansInVector[i])->sendMessage("PART " + chansInVector[i] + "\n", *this, true);
 			server->getChannels().at(chansInVector[i])->disconnect(*this);
 			removeChannel(chansInVector[i]);
 		}
@@ -648,7 +751,7 @@ int							User::partCmd(const Message &msg)
 	return 0;
 }
 
-void						User::listCmd(const Message &msg)
+void	User::listCmd(const Message &msg)
 {
 	std::queue<std::string>	chans;
 	std::vector<std::string>	chansToDisplay;
@@ -676,10 +779,10 @@ void						User::listCmd(const Message &msg)
 	sendReply(servername, *this, RPL_LISTEND);
 }
 
-int							User::hadleMessages()
+int		User::hadleMessages()
 {
 	while (messages.size() > 0 && messages.front()[messages.front().size() - 1] == '\n')
-	{
+{
 		Message	msg(messages.front());
 		messages.pop();
 		// log message to server console
@@ -710,7 +813,6 @@ int							User::hadleMessages()
 		}
 		else
 		{
-			std::cout << nickname << " in " << channels.size() << "chans\n";
 			if (msg.getCommand() == "JOIN")
 				this->joinCmd(msg);
 			else if (msg.getCommand() == "PRIVMSG")
@@ -719,6 +821,10 @@ int							User::hadleMessages()
 				this->awayCmd(msg);
 			else if (msg.getCommand() == "NOTICE")
 				this->noticeCmd(msg);
+			else if (msg.getCommand() == "WHO")
+				this->whoCmd(msg);
+			else if (msg.getCommand() == "WHOIS")
+				this->whoisCmd(msg);
 			else if (msg.getCommand() == "INVITE")
 				this->inviteCmd(msg);
 			else if (msg.getCommand() == "MODE")
@@ -738,13 +844,13 @@ int							User::hadleMessages()
 	return (0);
 }
 
-void						User::sendMessage(const std::string &msg) const
+void	User::sendMessage(const std::string &msg) const
 {
 	if (msg.size() > 0)
 		send(sockfd, msg.c_str(), msg.size(), 0);
 }
 
-void						User::removeChannel(const std::string &name)
+void	User::removeChannel(const std::string &name)
 {
 	std::vector<Channel *>::iterator	begin = channels.begin();
 	std::vector<Channel *>::iterator	end = channels.end();

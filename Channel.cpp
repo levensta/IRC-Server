@@ -11,15 +11,15 @@ name(name), pass(pass), userLimit(0), flags(NOMSGOUT)
 Channel::~Channel()
 {}
 
-void				Channel::sendInfo(const User &user)
+void	Channel::sendInfo(const User &user)
 {
-	sendMessage("JOIN :" + name + "\n", user);
+	sendMessage("JOIN :" + name + "\n", user, true);
 	displayTopic(user);
 	displayNames(user);
 	sendReply(user.getServername(), user, RPL_ENDOFNAMES, name);
 }
 
-void				Channel::displayTopic(const User &user)
+void	Channel::displayTopic(const User &user)
 {
 	if (topic.size() > 0)
 		sendReply(user.getServername(), user, RPL_TOPIC, name, topic);
@@ -27,7 +27,7 @@ void				Channel::displayTopic(const User &user)
 		sendReply(user.getServername(), user, RPL_NOTOPIC, name);
 }
 
-void				Channel::displayNames(const User &user)
+void	Channel::displayNames(const User &user)
 {
 	std::string	names;
 	std::vector<const User *>::const_iterator	beg = users.begin();
@@ -57,18 +57,18 @@ const std::string	&Channel::getTopic() const
 	return (topic);
 }
 
-void				Channel::setTopic(const User &user, const std::string &topic)
+void	Channel::setTopic(const User &user, const std::string &topic)
 {
 	if ((flags & TOPICSET) && !isOperator(user))
 		sendError(user, ERR_CHANOPRIVSNEEDED, name);
 	else
 	{
 		this->topic = topic;
-		sendMessage("TOPIC " + name + " :" + this->topic + "\n", user);
+		sendMessage("TOPIC " + name + " :" + this->topic + "\n", user, true);
 	}
 }
 
-void				Channel::setKey(const User &user, const std::string &key)
+void	Channel::setKey(const User &user, const std::string &key)
 {
 	if (pass.size() > 0 && key.size() > 0)
 		sendError(user, ERR_KEYSET, name);
@@ -76,45 +76,17 @@ void				Channel::setKey(const User &user, const std::string &key)
 		this->pass = key;
 }
 
-unsigned char		&Channel::getFlags()
+unsigned char	&Channel::getFlags()
 {
 	return flags;
 }
 
-bool				Channel::isBanned(const std::string &mask, const std::string &prefix)
+bool	Channel::isBanned(const std::string &mask, const std::string &prefix)
 {
-	const char *rs=0, *rp;
-	const char *s = prefix.c_str();
-	const char *p = mask.c_str();
-	while (1)
-	{
-		if (*p == '*')
-		{
-			rs = s;
-			rp = ++p;
-		}
-		else if (!*s)
-		{
-			return (!(*p));
-		}
-		else if (*s == *p)
-		{
-			++s;
-			++p;
-		}
-		else if (rs)
-		{
-			s = ++rs;
-			p = rp;
-		}
-		else
-		{
-			return (false);
-		}
-	}
+	return (isEqualToRegex(mask, prefix));
 }
 
-bool				Channel::isInvited(const User &user) const
+bool	Channel::isInvited(const User &user) const
 {
 	for (size_t i = 0; i < invitedUsers.size(); i++)
 		if (invitedUsers[i]->getPrefix() == user.getPrefix())
@@ -122,7 +94,7 @@ bool				Channel::isInvited(const User &user) const
 	return false;
 }
 
-bool				Channel::isOperator(const User &user) const
+bool	Channel::isOperator(const User &user) const
 {
 	for (size_t i = 0; i < operators.size(); i++)
 		if (operators[i]->getPrefix() == user.getPrefix())
@@ -130,7 +102,7 @@ bool				Channel::isOperator(const User &user) const
 	return false;
 }
 
-bool				Channel::isSpeaker(const User &user) const
+bool	Channel::isSpeaker(const User &user) const
 {
 	for (size_t i = 0; i < speakers.size(); i++)
 		if (speakers[i]->getPrefix() == user.getPrefix())
@@ -138,14 +110,14 @@ bool				Channel::isSpeaker(const User &user) const
 	return false;
 }
 
-bool				Channel::isEmpty() const
+bool	Channel::isEmpty() const
 {
 	if (users.size() == 0)
 		return true;
 	return false;
 }
 
-bool				Channel::containsNickname(const std::string &nickname) const
+bool	Channel::containsNickname(const std::string &nickname) const
 {
 	std::vector<const User *>::const_iterator	beg = users.begin();
 	std::vector<const User *>::const_iterator	end = users.end();
@@ -155,7 +127,7 @@ bool				Channel::containsNickname(const std::string &nickname) const
 	return (false);
 }
 
-void				Channel::connect(const User &user, const std::string &key)
+void	Channel::connect(const User &user, const std::string &key)
 {
 	if ((flags & PRIVATE) && key != pass)
 		sendError(user, ERR_BADCHANNELKEY, name);
@@ -184,27 +156,30 @@ void				Channel::connect(const User &user, const std::string &key)
 	}
 }
 
-void				Channel::setFlag(unsigned char flag)
+void	Channel::setFlag(unsigned char flag)
 {
 	flags |= flag;
 }
 
-void				Channel::removeFlag(unsigned char flag)
+void	Channel::removeFlag(unsigned char flag)
 {
 	flags &= ~flag;
 }
 
-void				Channel::sendMessage(const std::string &message, const User &from)
+void	Channel::sendMessage(const std::string &message, const User &from, bool includeUser)
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
 	std::vector<const User *>::iterator	begin = users.begin();
 	std::vector<const User *>::iterator	end = users.end();
 	for (; begin != end; ++begin)
-		(*begin)->sendMessage(msg);
+	{
+		if (includeUser || *begin != &from)
+			(*begin)->sendMessage(msg);
+	}
 }
 
-void				Channel::invite(const User &user, const User &receiver)
+void	Channel::invite(const User &user, const User &receiver)
 {
 	if (flags & INVITEONLY && !isOperator(user))
 		sendError(user, ERR_CHANOPRIVSNEEDED, name);
@@ -218,13 +193,13 @@ void				Channel::invite(const User &user, const User &receiver)
 	}
 }
 
-void				Channel::addOperator(const User &user)
+void	Channel::addOperator(const User &user)
 {
 	if (!isOperator(user))
 		operators.push_back(&user);
 }
 
-void				Channel::removeOperator(const User &user)
+void	Channel::removeOperator(const User &user)
 {
 	if (isOperator(user))
 	{
@@ -236,13 +211,13 @@ void				Channel::removeOperator(const User &user)
 	}
 }
 
-void				Channel::addSpeaker(const User &user)
+void	Channel::addSpeaker(const User &user)
 {
 	if (!isSpeaker(user))
 		speakers.push_back(&user);
 }
 
-void				Channel::removeSpeaker(const User &user)
+void	Channel::removeSpeaker(const User &user)
 {
 	if (isSpeaker(user))
 	{
@@ -254,17 +229,17 @@ void				Channel::removeSpeaker(const User &user)
 	}
 }
 
-void				Channel::setLimit(unsigned short limit)
+void	Channel::setLimit(unsigned short limit)
 {
 	userLimit = limit;
 }
 
-void				Channel::addBanMask(const std::string &mask)
+void	Channel::addBanMask(const std::string &mask)
 {
 	banMasks.push_back(mask);
 }
 
-void				Channel::removeBanMask(const std::string &mask)
+void	Channel::removeBanMask(const std::string &mask)
 {
 	std::vector<std::string>::const_iterator	it = banMasks.begin();
 	for (; it != banMasks.end(); ++it)
@@ -274,7 +249,7 @@ void				Channel::removeBanMask(const std::string &mask)
 	
 }
 
-void				Channel::disconnect(const User &user)
+void	Channel::disconnect(const User &user)
 {
 	removeOperator(user);
 	removeSpeaker(user);
@@ -288,7 +263,7 @@ void				Channel::disconnect(const User &user)
 		operators.push_back(users[0]);
 }
 
-void				Channel::removeInvited(const User &user)
+void	Channel::removeInvited(const User &user)
 {
 	if (isInvited(user))
 	{
@@ -300,7 +275,7 @@ void				Channel::removeInvited(const User &user)
 	}
 }
 
-std::string			Channel::getFlagsAsString()
+std::string	Channel::getFlagsAsString()
 {
 	std::string	ret;
 	if (flags & INVITEONLY)
@@ -316,7 +291,7 @@ std::string			Channel::getFlagsAsString()
 	return ret;
 }
 
-void				Channel::displayChanInfo(const User &user)
+void	Channel::displayChanInfo(const User &user)
 {
 	std::string	chanName = "";
 	std::string	info = "";

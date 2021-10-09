@@ -35,7 +35,7 @@ void	sendReply(const std::string &from, const User &user, int rpl, \
 		msg += arg1 + " :is an IRC operator\n";
 		break;
 	case RPL_WHOISIDLE:
-		msg += arg1 + " " + arg2 + " :seconds idle\n";
+		msg += arg1 + " " + arg2 + " " + arg3 + " :seconds idle\n";
 		break;
 	case RPL_ENDOFWHOIS:
 		msg += arg1 + " :End of /WHOIS list\n";

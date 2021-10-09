@@ -1,16 +1,49 @@
 #include "utils.hpp"
 
-bool						newLine(char c, char sep)
+bool	newLine(char c, char sep)
 {
 	return c == sep;
 }
 
-bool						notNewLine(char c, char sep)
+bool	notNewLine(char c, char sep)
 {
 	return !(newLine(c, sep));
 }
 
-std::queue<std::string>		split(const std::string &s, char sep, bool include)
+bool	isEqualToRegex(std::string mask, std::string subString)
+{
+	const char *rs=0, *rp;
+	const char *s = subString.c_str();
+	const char *p = mask.c_str();
+	while (1)
+	{
+		if (*p == '*')
+		{
+			rs = s;
+			rp = ++p;
+		}
+		else if (!*s)
+		{
+			return (!(*p));
+		}
+		else if (*s == *p)
+		{
+			++s;
+			++p;
+		}
+		else if (rs)
+		{
+			s = ++rs;
+			p = rp;
+		}
+		else
+		{
+			return (false);
+		}
+	}
+}
+
+std::queue<std::string>	split(const std::string &s, char sep, bool include)
 {
 	std::queue<std::string>	ret;
 	std::string::const_iterator	i = s.begin();

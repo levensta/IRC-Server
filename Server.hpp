@@ -1,23 +1,22 @@
-#ifndef SERVER_HPP
-# define SERVER_HPP
+#pragma once
 
 class User;
 class Channel;
 
-# include <sys/socket.h> // For socket functions
-# include <netinet/in.h> // For sockaddr_in
-# include <cstdlib> // For exit() and EXIT_FAILURE
-# include <iostream> // For cout
-# include <unistd.h>
-# include <errno.h>
-# include <poll.h>
-# include <fstream>
-# include <string>
-# include "User.hpp"
-# include "Channel.hpp"
-# include "sendError.hpp"
-# include <map>
-# include "sendReply.hpp"
+#include <sys/socket.h> // For socket functions
+#include <netinet/in.h> // For sockaddr_in
+#include <cstdlib> // For exit() and EXIT_FAILURE
+#include <iostream> // For cout
+#include <unistd.h>
+#include <errno.h>
+#include <poll.h>
+#include <fstream>
+#include <string>
+#include "User.hpp"
+#include "Channel.hpp"
+#include "sendError.hpp"
+#include <map>
+#include "sendReply.hpp"
 
 class Server
 {
@@ -30,6 +29,7 @@ class Server
 		const id_t								timeout;
 		std::string								password;
 		std::string								name;
+		std::string								info;
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 
@@ -44,6 +44,7 @@ class Server
 		const int								&getSockfd() const;
 		const std::string						&getPassword() const;
 		const std::string						&getServername() const;
+		const std::string						&getInfo() const;
 		std::map<std::string, Channel *>		&getChannels();
 		const std::vector<User *>				&getUsers() const;
 		const std::vector<User *>				&getConnectedUsers() const;
@@ -61,5 +62,3 @@ class Server
 		User									*getUserByName(const std::string &name);
 		void									disconnectUser(const std::string &nickname);
 };
-
-#endif
