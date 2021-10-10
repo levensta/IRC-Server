@@ -38,7 +38,8 @@ IRC (Internet Relay Chat) – устаревший протокол прикла
     * [WALLOPS](#wallops)
     * [PING / PONG](#ping-pong)
     * [ISON](#ison)
-    * [USERS](#users)
+    * [USERHOST](#userhost)
+	* [VERSION](#version)
     * [INFO](#info)
     * [ADMIN](#admin)
     * [TIME](#time)
@@ -567,6 +568,7 @@ IRC-операторы, в отличие от остальных пользов
 **Параметры:** `<message>`
 
 Команда отправляет сообщения всем IRC-операторам, находящимся в сети, кроме тех, кто отключил уведомления с помощью `MODE -w`.
+Чтобы избежать злоупотребления командой `WALLOPS`, рекомендуется ограничить его использование для обычных пользователей.
 
 Числовые ответы:
 
@@ -595,18 +597,30 @@ IRC-операторы, в отличие от остальных пользов
 
             RPL_ISON                    ERR_NEEDMOREPARAMS
 
-### USERS <a name="users"></a>
+### USERHOST <a name="userhost"></a>
 
-**Параметры:** `[<server>]`
+**Параметры:** `<nickname>{<space><nickname>}`
 
-Возвращает список пользователей и информацию об этих пользователях в формате, похожем на UNIX-команды `who` и `finger`.
+Команда `USERHOST` требует список до 5-ти никнеймов, разделеных пробелами и возвращает информацию о каждом никнейме, который был найден.
 
 Числовые ответы:
 
-            ERR_NOSUCHSERVER            ERR_FILEERROR
-            RPL_USERSSTART              RPL_USERS
-            RPL_NOUSERS                 RPL_ENDOFUSERS
-            ERR_USERSDISABLED
+            RPL_USERHOST                ERR_NEEDMOREPARAMS
+
+Примеры:
+```
+  USERHOST Wiz Michael Marty p          // USERHOST запрос информации о никнеймах "Wiz", "Michael", "Marty" и "p"
+```
+
+### VERSION <a name="version"></a>
+
+**Параметры:** `[<server>]`
+
+Возвращает версию сервера `<server>`, или текущего сервера, если этот параметр не определен.
+
+Числовые ответы:
+
+            ERR_NOSUCHSERVER            RPL_VERSION
 
 ### INFO <a name="info"></a>
 

@@ -358,7 +358,7 @@ int		Server::namesCmd(const Message &msg, User &user)
 	return 0;
 }
 
-int		Server::listCmd(const Message &msg, User &user)
+int		Server::listCmd(const Message &msg, User &user) // добавить ERR_NOSUCHSERVER todo
 {
 	std::queue<std::string>	chans;
 	std::vector<std::string>	chansToDisplay;

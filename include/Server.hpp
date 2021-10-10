@@ -81,6 +81,11 @@ class Server
 		int										namesCmd(const Message &msg, User &user);
 		int										listCmd(const Message &msg, User &user);
 		int										wallopsCmd(const Message &msg, User &user);
+		int										isonCmd(const Message &msg, User &user);
+		int										userhostCmd(const Message &msg, User &user);
+		int										timeCmd(const Message &msg, User &user);
+		int										pingCmd(const Message &msg, User &user);
+		int										pongCmd(const Message &msg, User &user);
 
 		// Server setup
 
@@ -89,6 +94,7 @@ class Server
 		void									listenSocket();
 		void									grabConnection();
 		void									processMessages();
+		int										breakUnresponsiveConnection(const User &user);
 		int										hadleMessages(User &user);
 
 		// Other methods

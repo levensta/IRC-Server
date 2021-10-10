@@ -21,12 +21,13 @@ class Channel;
 #include "Channel.hpp"
 #include "sendError.hpp"
 
-#define REGISTERED		0b000001
-#define INVISIBLE		0b000010
-#define RECEIVENOTICE	0b000100
-#define RECEIVEWALLOPS	0b001000
-#define IRCOPERATOR		0b010000
-#define AWAY			0b100000
+#define REGISTERED		0b0000001
+#define INVISIBLE		0b0000010
+#define RECEIVENOTICE	0b0000100
+#define RECEIVEWALLOPS	0b0001000
+#define IRCOPERATOR		0b0010000
+#define AWAY			0b0100000
+#define PINGING			0b1000000
 
 class User
 {
@@ -39,6 +40,8 @@ class User
 		std::string							servername;
 		std::string							realname;
 		time_t								registrationTime;
+		time_t								timeOfLastMessage;
+		time_t								timeAfterPing;
 		std::string							awayMessage;
 		std::string							quitMessage;
 		std::queue<std::string>				messages;
@@ -64,6 +67,8 @@ class User
 		const std::vector<const Channel *>	&getChannels() const;
 		const std::string					&getAwayMessage() const;
 		const time_t						&getRegistrationTime() const;
+		const time_t						&getTimeOfLastMessage() const;
+		const time_t						&getTimeAfterPing() const;
 		const std::queue<std::string>		&getMessages() const;
 		int									getSockfd() const;
 		unsigned char						getFlags() const;
@@ -90,4 +95,6 @@ class User
 		void								popMessage();
 		void								addChannel(const Channel &channel);
 		void								removeFlag(unsigned char flag);
+		void								updateTimeOfLastMessage();
+		void								updateTimeAfterPing();
 };

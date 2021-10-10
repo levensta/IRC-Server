@@ -65,6 +65,16 @@ const time_t	&User::getRegistrationTime() const
 	return registrationTime;
 }
 
+const time_t	&User::getTimeOfLastMessage() const
+{
+	return timeOfLastMessage;
+}
+
+const time_t	&User::getTimeAfterPing() const
+{
+	return timeAfterPing;
+}
+
 const std::vector<const Channel *>	&User::getChannels() const
 {
 	return channels;
@@ -184,4 +194,14 @@ void	User::removeFlag(unsigned char flag)
 unsigned char	User::getFlags() const
 {
 	return flags;
+}
+
+void	User::updateTimeOfLastMessage()
+{
+	this->timeOfLastMessage = time(0);
+}
+
+void	User::updateTimeAfterPing()
+{
+	this->timeOfLastMessage = time(0);
 }

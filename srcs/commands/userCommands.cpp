@@ -82,7 +82,7 @@ int		Server::noticeCmd(const Message &msg, User &user)
 int		Server::whoCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)
-		return (sendError(user, ERR_NEEDMOREPARAMS, "WHO"));
+		return (sendError(user, ERR_NEEDMOREPARAMS, msg.getCommand()));
 
 	for (size_t i = 0; i < connectedUsers.size(); ++i)
 	{
@@ -125,7 +125,8 @@ int		Server::whoisCmd(const Message &msg, User &user)
 	{
 		if (isEqualToRegex(msg.getParams()[0], connectedUsers[i]->getNickname()) && !(connectedUsers[i]->getFlags() & IRCOPERATOR))
 		{
-			sendReply(user.getServername(), user, RPL_WHOISUSER, connectedUsers[i]->getNickname(), connectedUsers[i]->getUsername(), connectedUsers[i]->getHostname(), connectedUsers[i]->getRealname());
+			sendReply(user.getServername(), user, RPL_WHOISUSER, connectedUsers[i]->getNickname(), \
+			connectedUsers[i]->getUsername(), connectedUsers[i]->getHostname(), connectedUsers[i]->getRealname());
 
 			const std::vector<const Channel *> userChannels = connectedUsers[i]->getChannels();
 			std::string	channelsList;
@@ -182,7 +183,7 @@ int		Server::whowasCmd(const Message &msg, User &user)
 				historyList[i]->getUsername(), historyList[i]->getHostname(), historyList[i]->getRealname());
 				std::string time_date = ctime(&(historyList[i]->getRegistrationTime()));
 				sendReply(user.getServername(), user, RPL_WHOISSERVER, historyList[i]->getNickname(), \
-				historyList[i]->getServername(), time_date.substr(0, time_date.size() - 1)); 
+				historyList[i]->getServername(), time_date); 
 			}
 		}
 	}

@@ -21,6 +21,13 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["PART"] = &Server::partCmd;
 	commands["NAMES"] = &Server::namesCmd;
 	commands["LIST"] = &Server::listCmd;
+	commands["WALLOPS"] = &Server::wallopsCmd;
+	commands["ISON"] = &Server::isonCmd;
+	commands["USERHOST"] = &Server::userhostCmd;
+	commands["TIME"] = &Server::timeCmd;
+	commands["PING"] = &Server::pingCmd;
+	commands["PONG"] = &Server::pongCmd;
+
 	// Read MOTD
 	std::string		line;
 	std::ifstream	motdFile("conf/IRCat.motd");
@@ -145,10 +152,23 @@ void	Server::processMessages()
 		// Read from the connection
 		for (size_t i = 0; i < userFDs.size(); i++)
 		{
+			int ret = 0;
 			if (userFDs[i].revents & POLLIN)
 			{
 				connectedUsers[i]->readMessage();
-				if (hadleMessages(*(connectedUsers[i])) == DISCONNECT)
+				if ((ret = hadleMessages(*(connectedUsers[i]))) == DISCONNECT)
+					toErase.push_back(i - toErase.size());
+			}
+			if (this->connectedUsers[i]->getFlags() & REGISTERED)
+			{
+				if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
+				{
+					this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
+					this->connectedUsers[i]->updateTimeAfterPing();
+					this->connectedUsers[i]->updateTimeOfLastMessage();
+					this->connectedUsers[i]->setFlag(PINGING);
+				}
+				if (ret != DISCONNECT && this->breakUnresponsiveConnection(*(connectedUsers[i])) == DISCONNECT)
 					toErase.push_back(i - toErase.size());
 			}
 			userFDs[i].revents = 0;
@@ -244,5 +264,15 @@ int		Server::hadleMessages(User &user)
 			
 		}
 	}
+	user.updateTimeOfLastMessage();
 	return (0);
+}
+
+int		Server::breakUnresponsiveConnection(const User &user)
+{
+	std::cout << 1 << std::endl;
+	if ((user.getFlags() & PINGING) && time(0) - user.getTimeAfterPing() > 60) // время взять из конфига todo
+		return DISCONNECT;
+	std::cout << 2 << std::endl;
+	return 0;
 }
