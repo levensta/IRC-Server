@@ -1,6 +1,6 @@
 #include "Message.hpp"
 
-Message::Message(std::string &str)
+Message::Message(const std::string &str)
 {
 	std::string	strWithoutNL = std::string(str.begin(), str.end() - 1);
 	std::queue<std::string>	que = split(strWithoutNL, ' ', false);

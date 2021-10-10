@@ -41,10 +41,10 @@ class Channel
 
 		const std::string				&getName() const;
 		const std::string				&getTopic() const;
+		unsigned char					getFlags() const;
 		void							setTopic(const User &user, const std::string &topic);
 		void							setLimit(unsigned short limit);
 		void							setKey(const User &user, const std::string &key);
-		unsigned char					&getFlags();
 
 		bool							isInvited(const User &user) const;
 		bool							isOperator(const User &user) const;
@@ -55,7 +55,7 @@ class Channel
 		void							connect(const User &user, const std::string &key);
 		void							setFlag(unsigned char flag);
 		void							removeFlag(unsigned char flag);
-		void							sendMessage(const std::string &message, const User &from, bool includeUser);
+		void							sendMessage(const std::string &message, const User &from, bool includeUser) const;
 		void							invite(const User &user, const User &receiver);
 		void							addOperator(const User &user);
 		void							removeOperator(const User &user);
@@ -68,5 +68,5 @@ class Channel
 		void							disconnect(const User &user);
 		void							removeInvited(const User &user);
 		void							displayChanInfo(const User &user);
-		std::string						getFlagsAsString();
+		std::string						getFlagsAsString() const;
 };

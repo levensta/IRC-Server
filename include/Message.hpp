@@ -15,7 +15,7 @@ class Message
 		Message(const Message& copy);
 		Message	&operator=(const Message& other);
 	public:
-		Message(std::string &str);
+		Message(const std::string &str);
 		virtual ~Message();
 		const std::string				&getPrefix() const;
 		const std::string				&getCommand() const;

@@ -76,7 +76,7 @@ void	Channel::setKey(const User &user, const std::string &key)
 		this->pass = key;
 }
 
-unsigned char	&Channel::getFlags()
+unsigned char	Channel::getFlags() const
 {
 	return flags;
 }
@@ -166,12 +166,12 @@ void	Channel::removeFlag(unsigned char flag)
 	flags &= ~flag;
 }
 
-void	Channel::sendMessage(const std::string &message, const User &from, bool includeUser)
+void	Channel::sendMessage(const std::string &message, const User &from, bool includeUser) const
 {
 	std::string	msg;
 	msg += ":" + from.getPrefix() + " " + message;
-	std::vector<const User *>::iterator	begin = users.begin();
-	std::vector<const User *>::iterator	end = users.end();
+	std::vector<const User *>::const_iterator	begin = users.begin();
+	std::vector<const User *>::const_iterator	end = users.end();
 	for (; begin != end; ++begin)
 	{
 		if (includeUser || *begin != &from)
@@ -188,7 +188,7 @@ void	Channel::invite(const User &user, const User &receiver)
 		invitedUsers.push_back(&receiver);
 		receiver.sendMessage(":" + user.getPrefix() + " INVITE " + receiver.getNickname() + " :" + name + "\n");
 		sendReply(user.getServername(), user, RPL_INVITING, name, receiver.getNickname());
-		if (receiver.isAway())
+		if (receiver.getFlags() & AWAY)
 			sendReply(user.getServername(), user, RPL_AWAY, receiver.getNickname(), receiver.getAwayMessage());
 	}
 }
@@ -208,6 +208,8 @@ void	Channel::removeOperator(const User &user)
 			if (*it == &user)
 				break ;
 		operators.erase(it);
+		if (operators.size() == 0 && users.size() > 0)
+			operators.push_back(users[0]);
 	}
 }
 
@@ -251,16 +253,14 @@ void	Channel::removeBanMask(const std::string &mask)
 
 void	Channel::disconnect(const User &user)
 {
-	removeOperator(user);
-	removeSpeaker(user);
 	std::vector<const User *>::iterator	begin = users.begin();
 	std::vector<const User *>::iterator	end = users.end();
 	for (; begin != end; ++begin)
 		if (*begin == &user)
 			break ;
 	users.erase(begin);
-	if (operators.size() == 0 && users.size() > 0)
-		operators.push_back(users[0]);
+	removeOperator(user);
+	removeSpeaker(user);
 }
 
 void	Channel::removeInvited(const User &user)
@@ -275,7 +275,7 @@ void	Channel::removeInvited(const User &user)
 	}
 }
 
-std::string	Channel::getFlagsAsString()
+std::string	Channel::getFlagsAsString() const
 {
 	std::string	ret;
 	if (flags & INVITEONLY)

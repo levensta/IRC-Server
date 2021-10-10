@@ -3,9 +3,26 @@
 Server::Server(int port, const std::string &password) :
 port(port), timeout(1), password(password), name("IRCat")
 {
+	commands["PASS"] = &Server::passCmd;
+	commands["NICK"] = &Server::nickCmd;
+	commands["USER"] = &Server::userCmd;
+	commands["QUIT"] = &Server::quitCmd;
+	commands["PRIVMSG"] = &Server::privmsgCmd;
+	commands["AWAY"] = &Server::awayCmd;
+	commands["NOTICE"] = &Server::noticeCmd;
+	commands["WHO"] = &Server::whoCmd;
+	commands["WHOIS"] = &Server::whoisCmd;
+	commands["MODE"] = &Server::modeCmd;
+	commands["TOPIC"] = &Server::topicCmd;
+	commands["JOIN"] = &Server::joinCmd;
+	commands["INVITE"] = &Server::inviteCmd;
+	commands["KICK"] = &Server::kickCmd;
+	commands["PART"] = &Server::partCmd;
+	commands["NAMES"] = &Server::namesCmd;
+	commands["LIST"] = &Server::listCmd;
 	// Read MOTD
 	std::string		line;
-	std::ifstream	motdFile("IRCat.motd");
+	std::ifstream	motdFile("conf/IRCat.motd");
 	if (motdFile.is_open())
 	{
 		while (getline(motdFile, line))
@@ -16,44 +33,21 @@ port(port), timeout(1), password(password), name("IRCat")
 
 Server::~Server()
 {
-	closeAllConnections();
+	for (size_t i = 0; i < connectedUsers.size(); ++i)
+	{
+		close(connectedUsers[i]->getSockfd());
+		delete connectedUsers[i];
+	}
 	std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
 	std::map<std::string, Channel *>::const_iterator	end = channels.end();
 	for (; beg != end; ++beg)
-	{
 		delete (*beg).second;
-	}
 	close(sockfd);
 }
 
 const int	&Server::getSockfd() const
 {
 	return (sockfd);
-}
-
-const std::string	&Server::getPassword() const
-{
-	return (password);
-}
-
-const std::string	&Server::getServername() const
-{
-	return (name);
-}
-
-const std::string	&Server::getInfo() const
-{
-	return (info);
-}
-
-std::map<std::string, Channel *>	&Server::getChannels()
-{
-	return (channels);
-}
-
-const std::vector<User *>	&Server::getUsers() const
-{
-	return (connectedUsers);
 }
 
 User	*Server::getUserByName(const std::string &name)
@@ -66,7 +60,7 @@ User	*Server::getUserByName(const std::string &name)
 	return ret;
 }
 
-bool									Server::containsNickname(const std::string &nickname) const
+bool	Server::containsNickname(const std::string &nickname) const
 {
 	size_t	usersCount = connectedUsers.size();
 	for (size_t i = 0; i < usersCount; i++)
@@ -75,11 +69,6 @@ bool									Server::containsNickname(const std::string &nickname) const
 			return (true);
 	}
 	return (false);
-}
-
-const std::vector<User *>	&Server::getConnectedUsers() const
-{
-	return (connectedUsers);
 }
 
 bool	Server::containsChannel(const std::string &name) const
@@ -142,7 +131,7 @@ void	Server::grabConnection()
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(new User(connection, *this));
+		connectedUsers.push_back(new User(connection));
 	}
 }
 
@@ -158,7 +147,7 @@ void	Server::processMessages()
 			if (userFDs[i].revents & POLLIN)
 			{
 				connectedUsers[i]->readMessage();
-				if (connectedUsers[i]->hadleMessages() == -1)
+				if (hadleMessages(*(connectedUsers[i])) == DISCONNECT)
 					toErase.push_back(i - toErase.size());
 			}
 			userFDs[i].revents = 0;
@@ -168,6 +157,16 @@ void	Server::processMessages()
 		{
 			size_t	pos = toErase[i];
 			close(connectedUsers[pos]->getSockfd());
+			std::map<std::string, Channel *>::iterator	beg = channels.begin();
+			std::map<std::string, Channel *>::iterator	end = channels.end();
+			for (; beg != end; ++beg)
+			{
+				if ((*beg).second->containsNickname(connectedUsers[pos]->getNickname()))
+				{
+					(*beg).second->sendMessage("QUIT :" + connectedUsers[pos]->getQuitMessage() + "\n", *(connectedUsers[pos]), true);
+					(*beg).second->disconnect(*(connectedUsers[pos]));
+				}
+			}
 			delete connectedUsers[pos];
 			connectedUsers.erase(connectedUsers.begin() + pos);
 			userFDs.erase(userFDs.begin() + pos);
@@ -216,24 +215,25 @@ int		Server::connectToChannel(const User &user, const std::string &name, const s
 	return (1);
 }
 
-void	Server::inviteToChannel(const User &user, const std::string &nickname, const std::string &chanName)
+int		Server::hadleMessages(User &user)
 {
-	User	*receiver;
-	for (size_t i = 0; i < connectedUsers.size(); ++i)
-		if (connectedUsers[i]->getNickname() == nickname)
-			receiver = connectedUsers[i];
-	Channel	*chan = channels.at(chanName);
-	if (chan->containsNickname(nickname))
-		sendError(user, ERR_USERONCHANNEL, nickname, name);
-	else
-		chan->invite(user, *receiver);
-}
-
-void	Server::closeAllConnections()
-{
-	for (size_t i = 0; i < connectedUsers.size(); ++i)
+	while (user.getMessages().size() > 0 \
+			&& user.getMessages().front()[user.getMessages().front().size() - 1] == '\n')
 	{
-		close(connectedUsers[i]->getSockfd());
-		delete connectedUsers[i];
+		Message	msg(user.getMessages().front());
+		user.popMessage();
+		// log message to server console
+		logMessage(msg);
+		// handle
+		if (!(user.getFlags() & REGISTERED) && msg.getCommand() != "QUIT" && msg.getCommand() != "PASS" \
+				&& msg.getCommand() != "USER" && msg.getCommand() != "NICK")
+			sendError(user, ERR_NOTREGISTERED);
+		else
+		{
+			int ret = (this->*(commands[msg.getCommand()]))(msg, user);
+			if (ret == DISCONNECT)
+				return (DISCONNECT);
+		}
 	}
+	return (0);
 }

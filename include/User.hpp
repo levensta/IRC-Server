@@ -1,0 +1,93 @@
+#pragma once
+
+class Server;
+class Message;
+class Channel;
+
+#include <string>
+#include <time.h>
+#include <iostream>
+#include <sstream>
+#include <unistd.h>
+#include <vector>
+#include <queue>
+#include <set>
+#include <sys/socket.h>
+#include <algorithm>
+#include <fcntl.h>
+#include "utils.hpp"
+#include "Message.hpp"
+#include "Server.hpp"
+#include "Channel.hpp"
+#include "sendError.hpp"
+
+#define REGISTERED		0b000001
+#define INVISIBLE		0b000010
+#define RECEIVENOTICE	0b000100
+#define RECEIVEWALLOPS	0b001000
+#define IRCOPERATOR		0b010000
+#define AWAY			0b100000
+
+class User
+{
+	private:
+		int									sockfd;
+		std::string							password;
+		std::string							nickname;
+		std::string							username;
+		std::string							hostname;
+		std::string							servername;
+		std::string							realname;
+		time_t								registrationTime;
+		std::string							awayMessage;
+		std::string							quitMessage;
+		std::queue<std::string>				messages;
+		std::vector<const Channel *>		channels;
+		unsigned char						flags;
+
+		User();
+		User(const User& copy);
+		User	&operator=(const User& other);
+	public:
+		User(int sockfd);
+		~User();
+
+		// Getters
+
+		const std::string					&getUsername() const;
+		const std::string					&getHostname() const;
+		const std::string					&getServername() const;
+		const std::string					&getNickname() const;
+		const std::string					&getRealname() const;
+		const std::string					&getPassword() const;
+		const std::string					&getQuitMessage() const;
+		const std::vector<const Channel *>	&getChannels() const;
+		const std::string					&getAwayMessage() const;
+		const time_t						&getRegistrationTime() const;
+		const std::queue<std::string>		&getMessages() const;
+		int									getSockfd() const;
+		unsigned char						getFlags() const;
+		std::string							getPrefix() const;
+
+		// Setters
+
+		void								setQuitMessage(const std::string &msg);
+		void								setPassword(const std::string &pass);
+		void								setUsername(const std::string &username);
+		void								setHostname(const std::string &hostname);
+		void								setServername(const std::string &servername);
+		void								setNickname(const std::string &nickname);
+		void								setRealname(const std::string &realname);
+		void								setAwayMessage(const std::string &msg);
+		void								setFlag(unsigned char flag);
+		
+		// Other methods
+
+		bool								isOnChannel(const std::string &name) const;
+		void								sendMessage(const std::string &msg) const;
+		void								readMessage();
+		void								removeChannel(const std::string &name);
+		void								popMessage();
+		void								addChannel(const Channel &channel);
+		void								removeFlag(unsigned char flag);
+};
