@@ -38,7 +38,11 @@ int		Server::nickCmd(const Message &msg, User &user)
 	else if (this->containsNickname(msg.getParams()[0]))
 		sendError(user, ERR_NICKNAMEINUSE, msg.getParams()[0]);
 	else
+	{
+		if (user.getFlags() & REGISTERED)
+			this->nicknamesHistory.addUser(user);
 		user.setNickname(msg.getParams()[0]);
+	}
 	return (checkConnection(user));
 }
 
@@ -62,5 +66,6 @@ int		Server::quitCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() > 0)
 		user.setQuitMessage(msg.getParams()[0]);
+	this->nicknamesHistory.addUser(user);
 	return (DISCONNECT);
 }

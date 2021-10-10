@@ -2,35 +2,35 @@
 
 UserInfo::UserInfo(const User &user) :
 nickname(user.getNickname()), username(user.getUsername()), hostname(user.getHostname()),
-servername(user.getServername()), realname(user.getRealname()), registrationTime(user.getRegistrationTime())
+servername(user.getServername()), realname(user.getRealname()), registrationTime(time(0))
 {}
 
-const std::string	&User::getNickname() const
+const std::string	&UserInfo::getNickname() const
 {
 	return nickname;
 }
 
-const std::string	&User::getUsername() const
+const std::string	&UserInfo::getUsername() const
 {
 	return username;
 }
 
-const std::string	&User::getHostname() const
+const std::string	&UserInfo::getHostname() const
 {
 	return hostname;
 }
 
-const std::string	&User::getServername() const
+const std::string	&UserInfo::getServername() const
 {
 	return servername;
 }
 
-const std::string	&User::getRealname() const
+const std::string	&UserInfo::getRealname() const
 {
 	return realname;
 }
 
-const time_t	&User::getRegistrationTime() const
+const time_t	&UserInfo::getRegistrationTime() const
 {
 	return registrationTime;
 }
@@ -43,16 +43,16 @@ History::~History() {}
 
 void	History::addUser(const User &user)
 {
-	this->historyList.push_back(UserInfo(user));
+	this->historyList.push_back(new UserInfo(user));
 }
 
-const std::vector<const UserInfo>	History::getHistoryByName(const std::string &nickname) const
+const std::vector<const UserInfo *>	History::getHistoryByName(const std::string &nickname) const
 {
-	std::vector<const UserInfo> filteredHistory;
+	std::vector<const UserInfo *> filteredHistory;
 
 	for (size_t i = 0; i < historyList.size(); ++i)
 	{
-		if (historyList[i].getNickname() == nickname)
+		if (historyList[i]->getNickname() == nickname)
 			filteredHistory.push_back(historyList[i]);
 	}
 

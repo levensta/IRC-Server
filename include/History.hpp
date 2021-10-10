@@ -1,8 +1,9 @@
 #pragma once
 
-class User;
+#include <string>
+#include <vector>
 
-#include "User.hpp"
+class User;
 
 class UserInfo
 {
@@ -36,12 +37,14 @@ class History
 		History(const History &copy);
 		History &operator=(const History &copy);
 
-		std::vector<UserInfo>				historyList;
+		std::vector<UserInfo *>				historyList;
 	
 	public:
 		History();
 		~History();
 
 		void								addUser(const User &user);
-		const std::vector<const UserInfo>	getHistoryByName(const std::string &nickname) const;
+		const std::vector<const UserInfo *>	getHistoryByName(const std::string &nickname) const;
 };
+
+#include "User.hpp"

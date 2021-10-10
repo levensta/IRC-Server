@@ -8,6 +8,7 @@ SOURCEFILES=	main.cpp \
 				sendError.cpp \
 				sendReply.cpp \
 				Channel.cpp \
+				History.cpp \
 				commands/channelCommands.cpp \
 				commands/otherCommands.cpp \
 				commands/registrationCommands.cpp \

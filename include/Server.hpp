@@ -2,6 +2,8 @@
 
 class User;
 class Channel;
+class UserInfo;
+class History;
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -14,6 +16,7 @@ class Channel;
 #include <string>
 #include <map>
 #include "User.hpp"
+#include "History.hpp"
 #include "Channel.hpp"
 #include "sendError.hpp"
 #include "sendReply.hpp"
@@ -37,6 +40,7 @@ class Server
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 		std::map<std::string, Method>			commands;
+		History									nicknamesHistory;
 
 		Server();
 		Server(const Server& copy);
@@ -67,6 +71,7 @@ class Server
 		int										noticeCmd(const Message &msg, User &user);
 		int										whoCmd(const Message &msg, User &user);
 		int										whoisCmd(const Message &msg, User &user);
+		int										whowasCmd(const Message &msg, User &user);
 		int										modeCmd(const Message &msg, User &user);
 		int										topicCmd(const Message &msg, User &user);
 		int										joinCmd(const Message &msg, User &user);
@@ -75,6 +80,7 @@ class Server
 		int										partCmd(const Message &msg, User &user);
 		int										namesCmd(const Message &msg, User &user);
 		int										listCmd(const Message &msg, User &user);
+		int										wallopsCmd(const Message &msg, User &user);
 
 		// Server setup
 

@@ -50,10 +50,8 @@ int 	Server::privmsgCmd(const Message &msg, User &user)
 		{
 			if (msg.getCommand() == "PRIVMSG" && (this->getUserByName(*it)->getFlags() & AWAY))
 				sendReply(user.getServername(), user, RPL_AWAY, *it, this->getUserByName(*it)->getAwayMessage());
-			if (!(msg.getCommand() == "NOTICE" && !(this->getUserByName(*it)->getFlags() & RECEIVENOTICE)))
+			if (msg.getCommand() != "NOTICE" || (this->getUserByName(*it)->getFlags() & RECEIVENOTICE))
 				this->getUserByName(*it)->sendMessage(":" + user.getPrefix() + " " + msg.getCommand() + " " + *it + " :" + msg.getParams()[1] + "\n");
-			// else
-			// 	sendError ?
 		}
 	}
 	return 0;
@@ -114,8 +112,7 @@ int		Server::whoCmd(const Message &msg, User &user)
 							connectedUsers[i]->getServername(), connectedUsers[i]->getNickname(), "H" + userStatus, "0", connectedUsers[i]->getRealname());
 		}
 	}
-	sendReply(user.getServername(), user, RPL_ENDOFWHO, user.getNickname());
-	return 0;
+	return (sendReply(user.getServername(), user, RPL_ENDOFWHO, user.getNickname()));
 }
 
 int		Server::whoisCmd(const Message &msg, User &user)
@@ -159,6 +156,35 @@ int		Server::whoisCmd(const Message &msg, User &user)
 	}
 	if (!suchNick)
 		sendError(user, ERR_NOSUCHNICK, msg.getParams()[0]);
-	sendReply(user.getServername(), user, RPL_ENDOFWHOIS, msg.getParams()[0]);
-	return 0;
+	return (sendReply(user.getServername(), user, RPL_ENDOFWHOIS, msg.getParams()[0]));
+}
+
+int		Server::whowasCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() == 0)
+		sendError(user, ERR_NONICKNAMEGIVEN);
+
+	else if (!this->containsNickname(msg.getParams()[0]))
+	{
+		const std::vector<const UserInfo *> historyList = this->nicknamesHistory.getHistoryByName(msg.getParams()[0]);
+		if (historyList.size() == 0)
+			sendError(user, ERR_WASNOSUCHNICK, msg.getParams()[0]);
+		else
+		{
+			int n = 0;
+			if (msg.getParams().size() > 1)
+				n = atoi(msg.getParams()[0].c_str());
+			n = (n == 0) ? historyList.size() : n;
+
+			for (int i = 0; i < n; ++i)
+			{
+				sendReply(user.getServername(), user, RPL_WHOWASUSER, historyList[i]->getNickname(), \
+				historyList[i]->getUsername(), historyList[i]->getHostname(), historyList[i]->getRealname());
+				std::string time_date = ctime(&(historyList[i]->getRegistrationTime()));
+				sendReply(user.getServername(), user, RPL_WHOISSERVER, historyList[i]->getNickname(), \
+				historyList[i]->getServername(), time_date.substr(0, time_date.size() - 1)); 
+			}
+		}
+	}
+	return (sendReply(user.getServername(), user, RPL_ENDOFWHOWAS, msg.getParams()[0]));
 }

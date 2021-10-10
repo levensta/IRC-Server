@@ -12,6 +12,7 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["NOTICE"] = &Server::noticeCmd;
 	commands["WHO"] = &Server::whoCmd;
 	commands["WHOIS"] = &Server::whoisCmd;
+	commands["WHOWAS"] = &Server::whowasCmd;
 	commands["MODE"] = &Server::modeCmd;
 	commands["TOPIC"] = &Server::topicCmd;
 	commands["JOIN"] = &Server::joinCmd;
