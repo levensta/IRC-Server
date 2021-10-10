@@ -230,9 +230,17 @@ int		Server::hadleMessages(User &user)
 			sendError(user, ERR_NOTREGISTERED);
 		else
 		{
-			int ret = (this->*(commands[msg.getCommand()]))(msg, user);
-			if (ret == DISCONNECT)
-				return (DISCONNECT);
+			try
+			{
+				int ret = (this->*(commands.at(msg.getCommand())))(msg, user);
+				if (ret == DISCONNECT)
+					return (DISCONNECT);
+			}
+			catch(const std::exception& e)
+			{
+				sendError(user, ERR_UNKNOWNCOMMAND, msg.getCommand());
+			}
+			
 		}
 	}
 	return (0);
