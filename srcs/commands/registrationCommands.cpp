@@ -2,7 +2,7 @@
 
 int		Server::checkConnection(User &user)
 {
-	if (user.getNickname().size() > 0 && user.getNickname().size() > 0)
+	if (user.getNickname().size() > 0 && user.getUsername().size() > 0)
 	{
 		if (password.size() == 0 || user.getPassword() == password)
 		{
