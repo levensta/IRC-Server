@@ -223,7 +223,7 @@ void	Server::deleteBrokenConnections()
 	{
 		if (connectedUsers[i]->getFlags() & BREAKCONNECTION)
 		{
-			notifyUsers(*(connectedUsers[i]), "QUIT :" + connectedUsers[i]->getQuitMessage() + "\n");
+			notifyUsers(*(connectedUsers[i]), ":" + connectedUsers[i]->getPrefix() + " QUIT :" + connectedUsers[i]->getQuitMessage() + "\n");
 			close(connectedUsers[i]->getSockfd());
 			std::map<std::string, Channel *>::iterator	beg = channels.begin();
 			std::map<std::string, Channel *>::iterator	end = channels.end();
