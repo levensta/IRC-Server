@@ -53,7 +53,7 @@ class User
 		User(const User& copy);
 		User	&operator=(const User& other);
 	public:
-		User(int sockfd);
+		User(int sockfd, const std::string &host);
 		~User();
 
 		// Getters
@@ -91,7 +91,7 @@ class User
 
 		bool								isOnChannel(const std::string &name) const;
 		void								sendMessage(const std::string &msg) const;
-		void								readMessage();
+		int									readMessage();
 		void								removeChannel(const std::string &name);
 		void								popMessage();
 		void								addChannel(const Channel &channel);

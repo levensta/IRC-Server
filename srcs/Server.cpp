@@ -6,6 +6,7 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["PASS"] = &Server::passCmd;
 	commands["NICK"] = &Server::nickCmd;
 	commands["USER"] = &Server::userCmd;
+	commands["OPER"] = &Server::operCmd;
 	commands["QUIT"] = &Server::quitCmd;
 	commands["PRIVMSG"] = &Server::privmsgCmd;
 	commands["AWAY"] = &Server::awayCmd;
@@ -137,12 +138,14 @@ void	Server::grabConnection()
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
 	if (connection >= 0)
 	{
+		char	host[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &(sockaddr.sin_addr), host, INET_ADDRSTRLEN);
 		struct pollfd	pfd;
 		pfd.fd = connection;
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(new User(connection));
+		connectedUsers.push_back(new User(connection, host));
 	}
 }
 
@@ -155,11 +158,11 @@ void	Server::processMessages()
 		// Read from the connection
 		for (size_t i = 0; i < userFDs.size(); i++)
 		{
-			int ret = 0;
 			if (userFDs[i].revents & POLLIN)
 			{
-				connectedUsers[i]->readMessage();
-				if ((ret = hadleMessages(*(connectedUsers[i]))) == DISCONNECT)
+				if (connectedUsers[i]->readMessage() == DISCONNECT)
+					connectedUsers[i]->setFlag(BREAKCONNECTION);
+				else if (hadleMessages(*(connectedUsers[i])) == DISCONNECT)
 					connectedUsers[i]->setFlag(BREAKCONNECTION);
 			}
 			userFDs[i].revents = 0;
@@ -198,23 +201,35 @@ int		Server::hadleMessages(User &user)
 	return (0);
 }
 
+void	Server::notifyUsers(User &user, const std::string &notification)
+{
+	const std::vector<const Channel *> chans = user.getChannels();
+	for (size_t i = 0; i < connectedUsers.size(); i++)
+	{
+		for (size_t j = 0; j < chans.size(); j++)
+		{
+			if (chans[j]->containsNickname(connectedUsers[i]->getNickname()))
+			{
+				connectedUsers[i]->sendMessage(notification);
+				break ;
+			}
+		}
+	}
+}
+
 void	Server::deleteBrokenConnections()
 {
 	for (size_t i = 0; i < connectedUsers.size(); ++i)
 	{
 		if (connectedUsers[i]->getFlags() & BREAKCONNECTION)
 		{
+			notifyUsers(*(connectedUsers[i]), "QUIT :" + connectedUsers[i]->getQuitMessage() + "\n");
 			close(connectedUsers[i]->getSockfd());
 			std::map<std::string, Channel *>::iterator	beg = channels.begin();
 			std::map<std::string, Channel *>::iterator	end = channels.end();
 			for (; beg != end; ++beg)
-			{
 				if ((*beg).second->containsNickname(connectedUsers[i]->getNickname()))
-				{
-					(*beg).second->sendMessage("QUIT :" + connectedUsers[i]->getQuitMessage() + "\n", *(connectedUsers[i]), false);
 					(*beg).second->disconnect(*(connectedUsers[i]));
-				}
-			}
 			delete connectedUsers[i];
 			connectedUsers.erase(connectedUsers.begin() + i);
 			userFDs.erase(userFDs.begin() + i);

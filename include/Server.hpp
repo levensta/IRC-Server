@@ -7,6 +7,7 @@ class History;
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <cstdlib>
 #include <iostream>
 #include <unistd.h>
@@ -44,6 +45,7 @@ class Server
 		std::string								adminName; // TODO взять из конфига
 		std::string								adminNickname; // TODO взять из конфига
 		std::string								adminEMail; // TODO взять из конфига
+		std::map<std::string, std::string>		operators; // TODO взять из конфига
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 		std::map<std::string, Method>			commands;
@@ -58,6 +60,7 @@ class Server
 		int										passCmd(const Message &msg, User &user);
 		int										nickCmd(const Message &msg, User &user);
 		int										userCmd(const Message &msg, User &user);
+		int										operCmd(const Message &msg, User &user);
 		int										quitCmd(const Message &msg, User &user);
 		int										privmsgCmd(const Message &msg, User &user);
 		int										awayCmd(const Message &msg, User &user);

@@ -1,14 +1,11 @@
 #include "User.hpp"
 
-User::User(int sockfd) :
-sockfd(sockfd), registrationTime(time(0)), flags(RECEIVENOTICE)
+User::User(int sockfd, const std::string &host) :
+sockfd(sockfd), hostname(host), registrationTime(time(0)), flags(RECEIVENOTICE)
 {}
 
 User::~User()
-{
-	if (quitMessage.size() == 0)
-		quitMessage = "Client exited";
-}
+{}
 
 int		User::getSockfd() const
 {
@@ -85,7 +82,7 @@ const std::queue<std::string>	&User::getMessages() const
 	return messages;
 }
 
-void	User::readMessage()
+int		User::readMessage()
 {
 	std::string	text;
 	if (messages.size() > 0)
@@ -100,10 +97,13 @@ void	User::readMessage()
 		if (text.find('\n') != std::string::npos)
 			break;
 	}
+	if (bytesRead == 0)
+		return (DISCONNECT);
 	while (text.find("\r\n") != std::string::npos)
 		text.replace(text.find("\r\n"), 2, "\n");
 	if (text.size() > 1)
 		messages = split(text, '\n', true);
+	return 0;
 }
 
 bool	User::isOnChannel(const std::string &name) const
@@ -184,6 +184,8 @@ void	User::setAwayMessage(const std::string &msg)
 void	User::setFlag(unsigned char flag)
 {
 	flags |= flag;
+	if (flag == BREAKCONNECTION && quitMessage.size() == 0)
+		quitMessage = "Client exited";
 }
 
 void	User::removeFlag(unsigned char flag)
