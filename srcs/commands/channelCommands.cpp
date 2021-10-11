@@ -181,6 +181,21 @@ int		Server::modeCmd(const Message &msg, User &user)
 	return 0;
 }
 
+int		Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
+{
+	try
+	{
+		Channel	*tmp = channels.at(name);
+		tmp->connect(user, key);
+		return (1);
+	}
+	catch(const std::exception& e)
+	{
+		channels[name] = new Channel(name, user, key);
+	}
+	return (1);
+}
+
 int		Server::joinCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)

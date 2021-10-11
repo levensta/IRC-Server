@@ -88,6 +88,7 @@ class Server
 		int										handleChanFlags(const Message &msg, User &user);
 		int										handleUserFlags(const Message &msg, User &user);
 		int										checkConnection(User &user);
+		void									notifyUsers(User &user, const std::string &notification);
 
 	public:
 		Server(int port, const std::string &password);

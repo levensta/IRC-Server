@@ -167,34 +167,6 @@ void	Server::processMessages()
 	}
 }
 
-void	Server::sendMOTD(const User &user) const
-{
-	if (motd.size() == 0)
-		sendError(user, ERR_NOMOTD);
-	else
-	{
-		sendReply(name, user, RPL_MOTDSTART, name);
-		for (size_t i = 0; i < motd.size(); ++i)
-			sendReply(name, user, RPL_MOTD, motd[i]);
-		sendReply(name, user, RPL_ENDOFMOTD);
-	}
-}
-
-int		Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
-{
-	try
-	{
-		Channel	*tmp = channels.at(name);
-		tmp->connect(user, key);
-		return (1);
-	}
-	catch(const std::exception& e)
-	{
-		channels[name] = new Channel(name, user, key);
-	}
-	return (1);
-}
-
 int		Server::hadleMessages(User &user)
 {
 	while (user.getMessages().size() > 0 \
@@ -220,7 +192,6 @@ int		Server::hadleMessages(User &user)
 			{
 				sendError(user, ERR_UNKNOWNCOMMAND, msg.getCommand());
 			}
-			
 		}
 	}
 	user.updateTimeOfLastMessage();
