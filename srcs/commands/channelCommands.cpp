@@ -152,7 +152,11 @@ int		Server::modeCmd(const Message &msg, User &user)
 			else if (msg.getParams().size() == 1)
 				sendReply(user.getServername(), user, RPL_CHANNELMODEIS, msg.getParams()[0], channels.at(msg.getParams()[0])->getFlagsAsString());
 			else if (handleChanFlags(msg, user) != -1)
-				channels.at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n", user, true);
+			{
+				std::string	flag = msg.getParams()[1];
+				std::string	tmp = (flag[1] == 'o' || flag[1] == 'v') ? " " + msg.getParams()[2] : "";
+				channels.at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1]  + tmp + "\n", user, true);
+			}
 		}
 		else
 		{
