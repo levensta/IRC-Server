@@ -22,11 +22,14 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["NAMES"] = &Server::namesCmd;
 	commands["LIST"] = &Server::listCmd;
 	commands["WALLOPS"] = &Server::wallopsCmd;
-	commands["ISON"] = &Server::isonCmd;
-	commands["USERHOST"] = &Server::userhostCmd;
-	commands["TIME"] = &Server::timeCmd;
 	commands["PING"] = &Server::pingCmd;
 	commands["PONG"] = &Server::pongCmd;
+	commands["ISON"] = &Server::isonCmd;
+	commands["USERHOST"] = &Server::userhostCmd;
+	commands["VERSION"] = &Server::versionCmd;
+	commands["INFO"] = &Server::infoCmd;
+	commands["ADMIN"] = &Server::adminCmd;
+	commands["TIME"] = &Server::timeCmd;
 
 	// Read MOTD
 	std::string		line;
@@ -157,53 +160,9 @@ void	Server::processMessages()
 			{
 				connectedUsers[i]->readMessage();
 				if ((ret = hadleMessages(*(connectedUsers[i]))) == DISCONNECT)
-					toErase.push_back(i - toErase.size());
-			}
-			if (this->connectedUsers[i]->getFlags() & REGISTERED)
-			{
-				if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
-				{
-					this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
-					this->connectedUsers[i]->updateTimeAfterPing();
-					this->connectedUsers[i]->updateTimeOfLastMessage();
-					this->connectedUsers[i]->setFlag(PINGING);
-				}
-				if (ret != DISCONNECT && this->breakUnresponsiveConnection(*(connectedUsers[i])) == DISCONNECT)
-					toErase.push_back(i - toErase.size());
+					connectedUsers[i]->setFlag(BREAKCONNECTION);
 			}
 			userFDs[i].revents = 0;
-		}
-		// Delete broken connections
-		for (size_t i = 0; i < toErase.size(); i++)
-		{
-			size_t	pos = toErase[i];
-			close(connectedUsers[pos]->getSockfd());
-			std::map<std::string, Channel *>::iterator	beg = channels.begin();
-			std::map<std::string, Channel *>::iterator	end = channels.end();
-			for (; beg != end; ++beg)
-			{
-				if ((*beg).second->containsNickname(connectedUsers[pos]->getNickname()))
-				{
-					(*beg).second->sendMessage("QUIT :" + connectedUsers[pos]->getQuitMessage() + "\n", *(connectedUsers[pos]), true);
-					(*beg).second->disconnect(*(connectedUsers[pos]));
-				}
-			}
-			delete connectedUsers[pos];
-			connectedUsers.erase(connectedUsers.begin() + pos);
-			userFDs.erase(userFDs.begin() + pos);
-		}
-		// Delete empty channels
-		std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
-		std::map<std::string, Channel *>::const_iterator	end = channels.end();
-		for (; beg != end;)
-		{
-			if ((*beg).second->isEmpty())
-			{
-				channels.erase(beg);
-				beg = channels.begin();
-			}
-			else
-				++beg;
 		}
 	}
 }
@@ -268,11 +227,62 @@ int		Server::hadleMessages(User &user)
 	return (0);
 }
 
-int		Server::breakUnresponsiveConnection(const User &user)
+void	Server::deleteBrokenConnections()
 {
-	std::cout << 1 << std::endl;
-	if ((user.getFlags() & PINGING) && time(0) - user.getTimeAfterPing() > 60) // время взять из конфига todo
-		return DISCONNECT;
-	std::cout << 2 << std::endl;
-	return 0;
+	for (size_t i = 0; i < connectedUsers.size(); ++i)
+	{
+		if (connectedUsers[i]->getFlags() & BREAKCONNECTION)
+		{
+			close(connectedUsers[i]->getSockfd());
+			std::map<std::string, Channel *>::iterator	beg = channels.begin();
+			std::map<std::string, Channel *>::iterator	end = channels.end();
+			for (; beg != end; ++beg)
+			{
+				if ((*beg).second->containsNickname(connectedUsers[i]->getNickname()))
+				{
+					(*beg).second->sendMessage("QUIT :" + connectedUsers[i]->getQuitMessage() + "\n", *(connectedUsers[i]), false);
+					(*beg).second->disconnect(*(connectedUsers[i]));
+				}
+			}
+			delete connectedUsers[i];
+			connectedUsers.erase(connectedUsers.begin() + i);
+			userFDs.erase(userFDs.begin() + i);
+			--i;
+		}
+	}
+}
+
+void	Server::deleteEmptyChannels()
+{
+	std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
+	std::map<std::string, Channel *>::const_iterator	end = channels.end();
+	for (; beg != end;)
+	{
+		if ((*beg).second->isEmpty())
+		{
+			channels.erase(beg);
+			beg = channels.begin();
+		}
+		else
+			++beg;
+	}
+}
+
+void	Server::checkConnectionWithUsers()
+{
+	for (size_t i = 0; i < connectedUsers.size(); i++)
+	{
+		if (this->connectedUsers[i]->getFlags() & REGISTERED)
+		{
+			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
+			{
+				this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
+				this->connectedUsers[i]->updateTimeAfterPing();
+				this->connectedUsers[i]->updateTimeOfLastMessage();
+				this->connectedUsers[i]->setFlag(PINGING);
+			}
+			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > 60) // время взять из конфига todo
+				connectedUsers[i]->setFlag(BREAKCONNECTION);
+		}
+	}
 }

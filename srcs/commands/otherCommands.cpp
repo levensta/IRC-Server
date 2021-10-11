@@ -17,6 +17,22 @@ int		Server::wallopsCmd(const Message &msg, User &user)
 	return 0;
 }
 
+int		Server::pingCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() == 0)
+		return (sendError(user, ERR_NOORIGIN));
+	user.sendMessage(":" + this->name + " PONG :" + msg.getParams()[0] + "\n");
+	return 0;
+}
+
+int		Server::pongCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() <= 0 || msg.getParams()[0] != this->name)
+		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() > 0 ? msg.getParams()[0] : ""));
+	user.removeFlag(PINGING);
+	return 0;
+}
+
 int		Server::isonCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)
@@ -58,25 +74,37 @@ int		Server::userhostCmd(const Message &msg, User &user)
 	return (sendReply(user.getServername(), user, RPL_USERHOST, replyMessage));
 }
 
+int		Server::versionCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
+	return (sendReply(user.getServername(), user, RPL_VERSION, version, debuglvl, name, comments));
+}
+
+int		Server::infoCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
+	std::queue<std::string>	lines = split(discribe, '\n', false);
+	for (;lines.size() > 0; lines.pop())
+		sendReply(user.getServername(), user, RPL_INFO, lines.front());
+	return (sendReply(user.getServername(), user, RPL_ENDOFINFO));
+}
+
+int		Server::adminCmd(const Message &msg, User &user)
+{
+	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
+	sendReply(user.getServername(), user, RPL_ADMINME, user.getServername());
+	sendReply(user.getServername(), user, RPL_ADMINLOC1, adminName);
+	sendReply(user.getServername(), user, RPL_ADMINLOC2, adminNickname);
+	sendReply(user.getServername(), user, RPL_ADMINEMAIL, adminEMail);
+	return 0;
+}
+
 int		Server::timeCmd(const Message &msg, User &user)
 {
 	(void)msg;
 	time_t tmp = time(0);
 	return (sendReply(user.getServername(), user, RPL_TIME, user.getServername(), ctime(&tmp)));
-}
-
-int		Server::pingCmd(const Message &msg, User &user)
-{
-	if (msg.getParams().size() == 0)
-		return (sendError(user, ERR_NOORIGIN));
-	user.sendMessage(":" + this->name + " PONG :" + msg.getParams()[0] + "\n");
-	return 0;
-}
-
-int		Server::pongCmd(const Message &msg, User &user)
-{
-	if (msg.getParams().size() <= 0 || msg.getParams()[0] != this->name)
-		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() > 0 ? msg.getParams()[0] : ""));
-	user.removeFlag(PINGING);
-	return 0;
 }

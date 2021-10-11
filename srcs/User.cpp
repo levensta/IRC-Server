@@ -203,5 +203,5 @@ void	User::updateTimeOfLastMessage()
 
 void	User::updateTimeAfterPing()
 {
-	this->timeOfLastMessage = time(0);
+	this->timeAfterPing = time(0);
 }

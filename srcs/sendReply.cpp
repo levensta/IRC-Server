@@ -225,13 +225,13 @@ int		sendReply(const std::string &from, const User &user, int rpl, \
 		msg += arg1 + " :Administrative info\n";
 		break;
 	case RPL_ADMINLOC1:
-		msg += arg1 + "\n";
+		msg += ":Name     " + arg1 + "\n";
 		break;
 	case RPL_ADMINLOC2:
-		msg += arg1 + "\n";
+		msg += ":Nickname " + arg1 + "\n";
 		break;
 	case RPL_ADMINEMAIL:
-		msg += arg1 + "\n";
+		msg += ":E-Mail   " + arg1 + "\n";
 		break;
 	default:
 		msg += "UNKNOWN REPLY\n";

@@ -36,7 +36,14 @@ class Server
 		const id_t								timeout;
 		std::string								password;
 		std::string								name;
-		std::string								info;
+		std::string								info; // TODO взять из конфига
+		std::string								version; // TODO взять из конфига
+		std::string								debuglvl; // TODO взять из конфига
+		std::string								comments; // TODO взять из конфига
+		std::string								discribe; // TODO взять из конфига
+		std::string								adminName; // TODO взять из конфига
+		std::string								adminNickname; // TODO взять из конфига
+		std::string								adminEMail; // TODO взять из конфига
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 		std::map<std::string, Method>			commands;
@@ -45,20 +52,6 @@ class Server
 		Server();
 		Server(const Server& copy);
 		Server	&operator=(const Server& other);
-
-		// Helpful things for commands
-
-		int										handleChanFlags(const Message &msg, User &user);
-		int										handleUserFlags(const Message &msg, User &user);
-		int										checkConnection(User &user);
-
-	public:
-		Server(int port, const std::string &password);
-		~Server();
-
-		// Getters
-
-		const int								&getSockfd() const;
 
 		// Commands
 
@@ -81,11 +74,28 @@ class Server
 		int										namesCmd(const Message &msg, User &user);
 		int										listCmd(const Message &msg, User &user);
 		int										wallopsCmd(const Message &msg, User &user);
-		int										isonCmd(const Message &msg, User &user);
-		int										userhostCmd(const Message &msg, User &user);
-		int										timeCmd(const Message &msg, User &user);
 		int										pingCmd(const Message &msg, User &user);
 		int										pongCmd(const Message &msg, User &user);
+		int										isonCmd(const Message &msg, User &user);
+		int										userhostCmd(const Message &msg, User &user);
+		int										versionCmd(const Message &msg, User &user);
+		int										infoCmd(const Message &msg, User &user);
+		int										adminCmd(const Message &msg, User &user);
+		int										timeCmd(const Message &msg, User &user);
+
+		// Helpful things for commands
+
+		int										handleChanFlags(const Message &msg, User &user);
+		int										handleUserFlags(const Message &msg, User &user);
+		int										checkConnection(User &user);
+
+	public:
+		Server(int port, const std::string &password);
+		~Server();
+
+		// Getters
+
+		const int								&getSockfd() const;
 
 		// Server setup
 
@@ -94,8 +104,10 @@ class Server
 		void									listenSocket();
 		void									grabConnection();
 		void									processMessages();
-		int										breakUnresponsiveConnection(const User &user);
 		int										hadleMessages(User &user);
+		void									deleteBrokenConnections();
+		void									deleteEmptyChannels();
+		void									checkConnectionWithUsers();
 
 		// Other methods
 
