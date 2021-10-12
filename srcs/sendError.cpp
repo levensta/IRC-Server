@@ -3,7 +3,9 @@
 int		sendError(const User &user, int err, const std::string &arg1, const std::string &arg2)
 {
 	std::string	msg = ":" + user.getServername() + " ";
-	msg += std::to_string(err) + " " + user.getNickname();
+	std::stringstream	ss;
+	ss << err;
+	msg += ss.str() + " " + user.getNickname();
 	switch (err)
 	{
 	case ERR_NOSUCHNICK:

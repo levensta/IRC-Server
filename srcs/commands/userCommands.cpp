@@ -150,8 +150,11 @@ int		Server::whoisCmd(const Message &msg, User &user)
 				sendReply(user.getServername(), user, RPL_AWAY, connectedUsers[i]->getNickname(), connectedUsers[i]->getAwayMessage());
 			if (connectedUsers[i]->getFlags() & IRCOPERATOR)
 				sendReply(user.getServername(), user, RPL_WHOISOPERATOR, connectedUsers[i]->getNickname());
+			std::stringstream	onServer, regTime;
+			onServer << (time(0) - connectedUsers[i]->getRegistrationTime());
+			regTime << connectedUsers[i]->getRegistrationTime();
 			sendReply(user.getServername(), user, RPL_WHOISIDLE, connectedUsers[i]->getNickname(), \
-			std::to_string(time(0) - connectedUsers[i]->getRegistrationTime()), std::to_string(connectedUsers[i]->getRegistrationTime()));
+			onServer.str(), regTime.str());
 			suchNick = true;
 		}
 	}

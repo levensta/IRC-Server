@@ -31,7 +31,7 @@ $(OSOURCEFOLDER):
 	mkdir objects/commands
 
 $(OSOURCEFOLDER)%.o: $(SOURCEFOLDER)%.cpp
-	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++11 -I $(INCLUDEFOLDER)
+	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER)
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME)

@@ -246,7 +246,8 @@ void	Server::deleteEmptyChannels()
 	{
 		if ((*beg).second->isEmpty())
 		{
-			channels.erase(beg);
+			delete (*beg).second;
+			channels.erase((*beg).first);
 			beg = channels.begin();
 		}
 		else

@@ -203,11 +203,11 @@ void	Channel::removeOperator(const User &user)
 {
 	if (isOperator(user))
 	{
-		std::vector<const User *>::const_iterator	it = operators.begin();
-		for (; it != operators.end(); ++it)
-			if (*it == &user)
-				break ;
-		operators.erase(it);
+		size_t	i;
+		for (i = 0; i < operators.size(); i++)
+			if (operators[i] == &user)
+				break;
+		operators.erase(operators.begin() + i);
 		if (operators.size() == 0 && users.size() > 0)
 			operators.push_back(users[0]);
 	}
@@ -223,11 +223,11 @@ void	Channel::removeSpeaker(const User &user)
 {
 	if (isSpeaker(user))
 	{
-		std::vector<const User *>::const_iterator	it = speakers.begin();
-		for (; it != speakers.end(); ++it)
-			if (*it == &user)
-				break ;
-		speakers.erase(it);
+		size_t	i;
+		for (i = 0; i < speakers.size(); i++)
+			if (speakers[i] == &user)
+				break;
+		speakers.erase(speakers.begin() + i);
 	}
 }
 
@@ -243,11 +243,11 @@ void	Channel::addBanMask(const std::string &mask)
 
 void	Channel::removeBanMask(const std::string &mask)
 {
-	std::vector<std::string>::const_iterator	it = banMasks.begin();
-	for (; it != banMasks.end(); ++it)
-		if (*it == mask)
-			break ;
-	banMasks.erase(it);
+	size_t	i;
+	for (i = 0; i < banMasks.size(); i++)
+		if (banMasks[i] == mask)
+			break;
+	banMasks.erase(banMasks.begin() + i);
 	
 }
 
@@ -267,11 +267,11 @@ void	Channel::removeInvited(const User &user)
 {
 	if (isInvited(user))
 	{
-		std::vector<const User *>::const_iterator	it = invitedUsers.begin();
-		for (; it != invitedUsers.end(); ++it)
-			if (*it == &user)
-				break ;
-		invitedUsers.erase(it);
+		size_t	i;
+		for (i = 0; i < invitedUsers.size(); i++)
+			if (invitedUsers[i] == &user)
+				break;
+		invitedUsers.erase(invitedUsers.begin() + i);
 	}
 }
 
@@ -304,5 +304,7 @@ void	Channel::displayChanInfo(const User &user)
 		chanName = name;
 		info = "[+" + getFlagsAsString() + "] " + topic;
 	}
-	sendReply(user.getServername(), user, RPL_LIST, chanName, std::to_string(users.size()), info);
+	std::stringstream	ss;
+	ss << users.size();
+	sendReply(user.getServername(), user, RPL_LIST, chanName, ss.str(), info);
 }

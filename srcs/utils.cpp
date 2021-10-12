@@ -1,15 +1,5 @@
 #include "utils.hpp"
 
-bool	newLine(char c, char sep)
-{
-	return c == sep;
-}
-
-bool	notNewLine(char c, char sep)
-{
-	return !(newLine(c, sep));
-}
-
 bool	isEqualToRegex(std::string mask, std::string subString)
 {
 	const char *rs=0, *rp;
@@ -49,8 +39,9 @@ std::queue<std::string>	split(const std::string &s, char sep, bool include)
 	std::string::const_iterator	i = s.begin();
 	while(i != s.end())
 	{
-		i = std::find_if(i, s.end(), [=](char c) { return c != sep; });
-		std::string::const_iterator	j = std::find_if(i, s.end(), [=](char c) { return c == sep; });
+		while (i != s.end() && *i == sep)
+			++i;
+		std::string::const_iterator	j = std::find(i, s.end(), sep);
 		if (i != s.end())
 		{
 			if (include && j != s.end())

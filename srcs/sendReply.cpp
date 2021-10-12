@@ -7,7 +7,9 @@ int		sendReply(const std::string &from, const User &user, int rpl, \
 				const std::string &arg7,const std::string &arg8)
 {
 	std::string	msg = ":" + from + " ";
-	msg += std::to_string(rpl) + " " + user.getNickname() + " ";
+	std::stringstream	ss;
+	ss << rpl;
+	msg += ss.str() + " " + user.getNickname() + " ";
 	switch (rpl)
 	{
 	case RPL_USERHOST:

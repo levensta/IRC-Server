@@ -39,7 +39,14 @@ UserInfo::~UserInfo() {}
 
 History::History() {}
 
-History::~History() {}
+History::~History()
+{
+	while (historyList.size() > 0)
+	{
+		delete historyList[0];
+		historyList.erase(historyList.begin());
+	}
+}
 
 void	History::addUser(const User &user)
 {
