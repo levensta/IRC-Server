@@ -114,7 +114,7 @@ void	Server::bindSocket()
 		exit(EXIT_FAILURE);
 	}
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_addr.s_addr = INADDR_ANY;
+	sockaddr.sin_addr.s_addr = INADDR_ANY; // взять из конфига TODO 127 << 24 | 0 << 16 | 0 << 8 | 1
 	sockaddr.sin_port = htons(port); // htons is necessary to convert a number to network byte order
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0)
 	{

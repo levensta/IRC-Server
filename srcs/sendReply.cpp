@@ -31,7 +31,7 @@ int		sendReply(const std::string &from, const User &user, int rpl, \
 		msg += arg1 + " " + arg2 + " " + arg3 + " * :" + arg4 + "\n";
 		break;
 	case RPL_WHOISSERVER:
-		msg += arg1 + " " + arg2 + " :" + arg3; // ctime return string following '\n'
+		msg += arg1 + " " + arg2 + " :" + arg3 + "\n";
 		break;
 	case RPL_WHOISOPERATOR:
 		msg += arg1 + " :is an IRC operator\n";

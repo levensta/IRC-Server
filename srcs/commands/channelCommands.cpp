@@ -178,7 +178,7 @@ int		Server::modeCmd(const Message &msg, User &user)
 					sendReply(user.getServername(), user, RPL_UMODEIS, flags);
 				}
 				else if (handleUserFlags(msg, user) != -1)
-					user.sendMessage(":" + user.getPrefix() + "MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n");
+					user.sendMessage(":" + user.getPrefix() + " MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n");
 			}
 		}
 	}

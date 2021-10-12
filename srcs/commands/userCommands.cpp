@@ -184,9 +184,8 @@ int		Server::whowasCmd(const Message &msg, User &user)
 			{
 				sendReply(user.getServername(), user, RPL_WHOWASUSER, historyList[i]->getNickname(), \
 				historyList[i]->getUsername(), historyList[i]->getHostname(), historyList[i]->getRealname());
-				std::string time_date = ctime(&(historyList[i]->getRegistrationTime()));
 				sendReply(user.getServername(), user, RPL_WHOISSERVER, historyList[i]->getNickname(), \
-				historyList[i]->getServername(), time_date); 
+				historyList[i]->getServername(), info); 
 			}
 		}
 	}
