@@ -6,12 +6,14 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["PASS"] = &Server::passCmd;
 	commands["NICK"] = &Server::nickCmd;
 	commands["USER"] = &Server::userCmd;
+	commands["OPER"] = &Server::operCmd;
 	commands["QUIT"] = &Server::quitCmd;
 	commands["PRIVMSG"] = &Server::privmsgCmd;
 	commands["AWAY"] = &Server::awayCmd;
 	commands["NOTICE"] = &Server::noticeCmd;
 	commands["WHO"] = &Server::whoCmd;
 	commands["WHOIS"] = &Server::whoisCmd;
+	commands["WHOWAS"] = &Server::whowasCmd;
 	commands["MODE"] = &Server::modeCmd;
 	commands["TOPIC"] = &Server::topicCmd;
 	commands["JOIN"] = &Server::joinCmd;
@@ -20,6 +22,16 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["PART"] = &Server::partCmd;
 	commands["NAMES"] = &Server::namesCmd;
 	commands["LIST"] = &Server::listCmd;
+	commands["WALLOPS"] = &Server::wallopsCmd;
+	commands["PING"] = &Server::pingCmd;
+	commands["PONG"] = &Server::pongCmd;
+	commands["ISON"] = &Server::isonCmd;
+	commands["USERHOST"] = &Server::userhostCmd;
+	commands["VERSION"] = &Server::versionCmd;
+	commands["INFO"] = &Server::infoCmd;
+	commands["ADMIN"] = &Server::adminCmd;
+	commands["TIME"] = &Server::timeCmd;
+
 	// Read MOTD
 	std::string		line;
 	std::ifstream	motdFile("conf/IRCat.motd");
@@ -102,7 +114,7 @@ void	Server::bindSocket()
 		exit(EXIT_FAILURE);
 	}
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_addr.s_addr = INADDR_ANY;
+	sockaddr.sin_addr.s_addr = INADDR_ANY; // взять из конфига TODO 127 << 24 | 0 << 16 | 0 << 8 | 1
 	sockaddr.sin_port = htons(port); // htons is necessary to convert a number to network byte order
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0)
 	{
@@ -126,12 +138,14 @@ void	Server::grabConnection()
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
 	if (connection >= 0)
 	{
+		char	host[INET_ADDRSTRLEN];
+		inet_ntop(AF_INET, &(sockaddr.sin_addr), host, INET_ADDRSTRLEN);
 		struct pollfd	pfd;
 		pfd.fd = connection;
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(new User(connection));
+		connectedUsers.push_back(new User(connection, host));
 	}
 }
 
@@ -146,73 +160,14 @@ void	Server::processMessages()
 		{
 			if (userFDs[i].revents & POLLIN)
 			{
-				connectedUsers[i]->readMessage();
-				if (hadleMessages(*(connectedUsers[i])) == DISCONNECT)
-					toErase.push_back(i - toErase.size());
+				if (connectedUsers[i]->readMessage() == DISCONNECT)
+					connectedUsers[i]->setFlag(BREAKCONNECTION);
+				else if (hadleMessages(*(connectedUsers[i])) == DISCONNECT)
+					connectedUsers[i]->setFlag(BREAKCONNECTION);
 			}
 			userFDs[i].revents = 0;
 		}
-		// Delete broken connections
-		for (size_t i = 0; i < toErase.size(); i++)
-		{
-			size_t	pos = toErase[i];
-			close(connectedUsers[pos]->getSockfd());
-			std::map<std::string, Channel *>::iterator	beg = channels.begin();
-			std::map<std::string, Channel *>::iterator	end = channels.end();
-			for (; beg != end; ++beg)
-			{
-				if ((*beg).second->containsNickname(connectedUsers[pos]->getNickname()))
-				{
-					(*beg).second->sendMessage("QUIT :" + connectedUsers[pos]->getQuitMessage() + "\n", *(connectedUsers[pos]), true);
-					(*beg).second->disconnect(*(connectedUsers[pos]));
-				}
-			}
-			delete connectedUsers[pos];
-			connectedUsers.erase(connectedUsers.begin() + pos);
-			userFDs.erase(userFDs.begin() + pos);
-		}
-		// Delete empty channels
-		std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
-		std::map<std::string, Channel *>::const_iterator	end = channels.end();
-		for (; beg != end;)
-		{
-			if ((*beg).second->isEmpty())
-			{
-				channels.erase(beg);
-				beg = channels.begin();
-			}
-			else
-				++beg;
-		}
 	}
-}
-
-void	Server::sendMOTD(const User &user) const
-{
-	if (motd.size() == 0)
-		sendError(user, ERR_NOMOTD);
-	else
-	{
-		sendReply(name, user, RPL_MOTDSTART, name);
-		for (size_t i = 0; i < motd.size(); ++i)
-			sendReply(name, user, RPL_MOTD, motd[i]);
-		sendReply(name, user, RPL_ENDOFMOTD);
-	}
-}
-
-int		Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
-{
-	try
-	{
-		Channel	*tmp = channels.at(name);
-		tmp->connect(user, key);
-		return (1);
-	}
-	catch(const std::exception& e)
-	{
-		channels[name] = new Channel(name, user, key);
-	}
-	return (1);
 }
 
 int		Server::hadleMessages(User &user)
@@ -240,8 +195,81 @@ int		Server::hadleMessages(User &user)
 			{
 				sendError(user, ERR_UNKNOWNCOMMAND, msg.getCommand());
 			}
-			
 		}
 	}
+	user.updateTimeOfLastMessage();
 	return (0);
+}
+
+void	Server::notifyUsers(User &user, const std::string &notification)
+{
+	const std::vector<const Channel *> chans = user.getChannels();
+	for (size_t i = 0; i < connectedUsers.size(); i++)
+	{
+		for (size_t j = 0; j < chans.size(); j++)
+		{
+			if (chans[j]->containsNickname(connectedUsers[i]->getNickname()))
+			{
+				connectedUsers[i]->sendMessage(notification);
+				break ;
+			}
+		}
+	}
+}
+
+void	Server::deleteBrokenConnections()
+{
+	for (size_t i = 0; i < connectedUsers.size(); ++i)
+	{
+		if (connectedUsers[i]->getFlags() & BREAKCONNECTION)
+		{
+			notifyUsers(*(connectedUsers[i]), ":" + connectedUsers[i]->getPrefix() + " QUIT :" + connectedUsers[i]->getQuitMessage() + "\n");
+			close(connectedUsers[i]->getSockfd());
+			std::map<std::string, Channel *>::iterator	beg = channels.begin();
+			std::map<std::string, Channel *>::iterator	end = channels.end();
+			for (; beg != end; ++beg)
+				if ((*beg).second->containsNickname(connectedUsers[i]->getNickname()))
+					(*beg).second->disconnect(*(connectedUsers[i]));
+			delete connectedUsers[i];
+			connectedUsers.erase(connectedUsers.begin() + i);
+			userFDs.erase(userFDs.begin() + i);
+			--i;
+		}
+	}
+}
+
+void	Server::deleteEmptyChannels()
+{
+	std::map<std::string, Channel *>::const_iterator	beg = channels.begin();
+	std::map<std::string, Channel *>::const_iterator	end = channels.end();
+	for (; beg != end;)
+	{
+		if ((*beg).second->isEmpty())
+		{
+			delete (*beg).second;
+			channels.erase((*beg).first);
+			beg = channels.begin();
+		}
+		else
+			++beg;
+	}
+}
+
+void	Server::checkConnectionWithUsers()
+{
+	for (size_t i = 0; i < connectedUsers.size(); i++)
+	{
+		if (this->connectedUsers[i]->getFlags() & REGISTERED)
+		{
+			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
+			{
+				this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
+				this->connectedUsers[i]->updateTimeAfterPing();
+				this->connectedUsers[i]->updateTimeOfLastMessage();
+				this->connectedUsers[i]->setFlag(PINGING);
+			}
+			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > 60) // время взять из конфига todo
+				connectedUsers[i]->setFlag(BREAKCONNECTION);
+		}
+	}
 }

@@ -152,7 +152,11 @@ int		Server::modeCmd(const Message &msg, User &user)
 			else if (msg.getParams().size() == 1)
 				sendReply(user.getServername(), user, RPL_CHANNELMODEIS, msg.getParams()[0], channels.at(msg.getParams()[0])->getFlagsAsString());
 			else if (handleChanFlags(msg, user) != -1)
-				channels.at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n", user, true);
+			{
+				std::string	flag = msg.getParams()[1];
+				std::string	tmp = (flag[1] == 'o' || flag[1] == 'v') ? " " + msg.getParams()[2] : "";
+				channels.at(msg.getParams()[0])->sendMessage("MODE " + msg.getParams()[0] + " " + msg.getParams()[1]  + tmp + "\n", user, true);
+			}
 		}
 		else
 		{
@@ -174,11 +178,26 @@ int		Server::modeCmd(const Message &msg, User &user)
 					sendReply(user.getServername(), user, RPL_UMODEIS, flags);
 				}
 				else if (handleUserFlags(msg, user) != -1)
-					user.sendMessage(":" + user.getPrefix() + "MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n");
+					user.sendMessage(":" + user.getPrefix() + " MODE " + msg.getParams()[0] + " " + msg.getParams()[1] + "\n");
 			}
 		}
 	}
 	return 0;
+}
+
+int		Server::connectToChannel(const User &user, const std::string &name, const std::string &key)
+{
+	try
+	{
+		Channel	*tmp = channels.at(name);
+		tmp->connect(user, key);
+		return (1);
+	}
+	catch(const std::exception& e)
+	{
+		channels[name] = new Channel(name, user, key);
+	}
+	return (1);
 }
 
 int		Server::joinCmd(const Message &msg, User &user)
@@ -360,6 +379,8 @@ int		Server::namesCmd(const Message &msg, User &user)
 
 int		Server::listCmd(const Message &msg, User &user)
 {
+	if (msg.getParams().size() > 1 && msg.getParams()[1] != user.getServername())
+		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams()[1]));
 	std::queue<std::string>	chans;
 	std::vector<std::string>	chansToDisplay;
 	if (msg.getParams().size() > 0)

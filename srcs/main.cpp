@@ -50,5 +50,11 @@ int main(int argc, char **argv)
 		server.grabConnection();
 
 		server.processMessages();
+
+		server.checkConnectionWithUsers();
+
+		server.deleteBrokenConnections();
+
+		server.deleteEmptyChannels();
 	}
 }

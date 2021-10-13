@@ -8,6 +8,7 @@ SOURCEFILES=	main.cpp \
 				sendError.cpp \
 				sendReply.cpp \
 				Channel.cpp \
+				History.cpp \
 				commands/channelCommands.cpp \
 				commands/otherCommands.cpp \
 				commands/registrationCommands.cpp \
@@ -30,7 +31,7 @@ $(OSOURCEFOLDER):
 	mkdir objects/commands
 
 $(OSOURCEFOLDER)%.o: $(SOURCEFOLDER)%.cpp
-	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++11 -I $(INCLUDEFOLDER)
+	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER)
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME)

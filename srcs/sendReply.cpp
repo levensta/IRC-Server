@@ -1,13 +1,15 @@
 #include "sendReply.hpp"
 
-void	sendReply(const std::string &from, const User &user, int rpl, \
+int		sendReply(const std::string &from, const User &user, int rpl, \
 				const std::string &arg1,const std::string &arg2, \
 				const std::string &arg3,const std::string &arg4, \
 				const std::string &arg5,const std::string &arg6, \
 				const std::string &arg7,const std::string &arg8)
 {
 	std::string	msg = ":" + from + " ";
-	msg += std::to_string(rpl) + " " + user.getNickname() + " ";
+	std::stringstream	ss;
+	ss << rpl;
+	msg += ss.str() + " " + user.getNickname() + " ";
 	switch (rpl)
 	{
 	case RPL_USERHOST:
@@ -123,7 +125,7 @@ void	sendReply(const std::string &from, const User &user, int rpl, \
 		msg += arg1 + " :Rehashing\n";
 		break;
 	case RPL_TIME:
-		msg += arg1 + " :" + arg2 + "\n";
+		msg += arg1 + " :" + arg2; // ctime return string following '\n'
 		break;
 	case RPL_USERSSTART:
 		msg += ":UserID   Terminal  Host\n";
@@ -225,17 +227,18 @@ void	sendReply(const std::string &from, const User &user, int rpl, \
 		msg += arg1 + " :Administrative info\n";
 		break;
 	case RPL_ADMINLOC1:
-		msg += arg1 + "\n";
+		msg += ":Name     " + arg1 + "\n";
 		break;
 	case RPL_ADMINLOC2:
-		msg += arg1 + "\n";
+		msg += ":Nickname " + arg1 + "\n";
 		break;
 	case RPL_ADMINEMAIL:
-		msg += arg1 + "\n";
+		msg += ":E-Mail   " + arg1 + "\n";
 		break;
 	default:
 		msg += "UNKNOWN REPLY\n";
 		break;
 	}
 	send(user.getSockfd(), msg.c_str(), msg.size(), 0);
+	return 0;
 }
