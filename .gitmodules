@@ -1,0 +1,3 @@
+[submodule "json-parser"]
+	path = json-parser
+	url = https://github.com/mhufflep/json-parser.git
