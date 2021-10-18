@@ -41,6 +41,59 @@ port(port), timeout(1), password(password), name("IRCat")
 			motd.push_back(line);
 		motdFile.close();
 	}
+
+	JSON::JSON json("conf/IRConf.json");
+
+	//Trying to load json file
+	json.loadFile();
+
+	//Parsing whole file in json object
+	JSON::Object *conf = json.parse();
+
+	if (conf != NULL) {
+
+		//Getting values from config
+		info = conf->get("info")->toStr();
+		version = conf->get("version")->toStr();
+		debuglvl = conf->get("debuglvl")->toStr();
+		comments = conf->get("comments")->toStr();
+		discribe = conf->get("discribe")->toStr();
+		adminName = conf->get("adminName")->toStr();
+		adminEmail = conf->get("adminEmail")->toStr();
+		adminNickname = conf->get("adminNickname")->toStr();
+		
+		fillOperatorsList(operators, conf->get("operators")->toObj());
+
+	} else {
+	
+		//Parse went wrong, log message and set defaults;
+		info = "";
+		version = "v1.1";
+		debuglvl = "";
+		comments = "";
+		discribe = "";
+		adminName = "Nikita";
+		adminEmail = "rmass@gmail.com";
+		adminNickname = "rmass";
+		operators.insert(std::pair<std::string, std::string>("rmass", ""));
+
+	}
+
+	//Check config for set correct values
+}
+
+void Server::fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators) {
+	std::map<std::string, JSON::AType *>::iterator beg = confOperators->begin();
+	std::map<std::string, JSON::AType *>::iterator end = confOperators->end();
+	std::map<std::string, JSON::AType *>::iterator it;
+
+	for (it = beg; it != end; it++)
+	{
+		if (it->second != NULL)
+		{
+			operators.insert(it->first, it->second->toStr());
+		}
+	}
 }
 
 Server::~Server()

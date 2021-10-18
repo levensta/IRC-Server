@@ -21,6 +21,7 @@ class History;
 #include "Channel.hpp"
 #include "sendError.hpp"
 #include "sendReply.hpp"
+#include "JSON.hpp"
 
 #define	DISCONNECT	-2
 
@@ -44,7 +45,7 @@ class Server
 		std::string								discribe; // TODO взять из конфига
 		std::string								adminName; // TODO взять из конфига
 		std::string								adminNickname; // TODO взять из конфига
-		std::string								adminEMail; // TODO взять из конфига
+		std::string								adminEmail; // TODO взять из конфига
 		std::map<std::string, std::string>		operators; // TODO взять из конфига
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
@@ -112,6 +113,8 @@ class Server
 		void									deleteBrokenConnections();
 		void									deleteEmptyChannels();
 		void									checkConnectionWithUsers();
+		void 									fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators);
+
 
 		// Other methods
 
