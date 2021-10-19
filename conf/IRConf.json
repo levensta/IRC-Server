@@ -1,0 +1,17 @@
+{
+	"info" : "",
+	"version" : "v1.1",
+	"debuglvl" : "",
+	"comments" : "",
+	"discribe" : "",
+	"adminName" : "Nikita",
+	"adminNickname" : "rmass",
+	"adminEmail": "rmass@gmail.com",
+	"allowedIP": "127.0.0.1",
+	"maxChannels": 10,
+	"operators": {
+		"rmass": "123",
+		"levensta": "456",
+		"mhufflep": "789"
+	}
+}

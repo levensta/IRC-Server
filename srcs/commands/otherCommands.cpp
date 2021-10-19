@@ -98,7 +98,7 @@ int		Server::adminCmd(const Message &msg, User &user)
 	sendReply(user.getServername(), user, RPL_ADMINME, user.getServername());
 	sendReply(user.getServername(), user, RPL_ADMINLOC1, adminName);
 	sendReply(user.getServername(), user, RPL_ADMINLOC2, adminNickname);
-	sendReply(user.getServername(), user, RPL_ADMINEMAIL, adminEMail);
+	sendReply(user.getServername(), user, RPL_ADMINEMAIL, adminEmail);
 	return 0;
 }
 
