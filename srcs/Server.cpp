@@ -41,7 +41,6 @@ port(port), timeout(1), password(password), name("IRCat")
 			motd.push_back(line);
 		motdFile.close();
 	}
-
 	
 	JSON::JSON json("conf/IRConf.json");
 	JSON::Object *conf = NULL;
@@ -52,43 +51,42 @@ port(port), timeout(1), password(password), name("IRCat")
 
 		//Parsing whole file in json object
 		conf = json.parse();
-
-		if (conf != NULL) {
-
-			//Getting values from config
-			info = conf->get("info")->toStr();
-			version = conf->get("version")->toStr();
-			debuglvl = conf->get("debuglvl")->toStr();
-			comments = conf->get("comments")->toStr();
-			discribe = conf->get("discribe")->toStr();
-			adminName = conf->get("adminName")->toStr();
-			adminEmail = conf->get("adminEmail")->toStr();
-			adminNickname = conf->get("adminNickname")->toStr();
-
-			allowedIP = inet_addr(conf->get("allowedIP")->toStr().c_str());
-			maxChannels = static_cast<unsigned long>(conf->get("maxChannels")->toNum());
-			
-			fillOperatorsList(operators, conf->get("operators")->toObj());
-		}
-	}
+	} 
 	catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 	}
 
-	if (conf == NULL) {
-	
-		//Parse went wrong, log message and set defaults;
-		info = "";
-		version = "v1.1";
-		debuglvl = "";
-		comments = "";
-		discribe = "";
-		adminName = "Nikita";
-		adminEmail = "rmass@gmail.com";
-		adminNickname = "rmass";
-		allowedIP = 0L;
+	if (conf != NULL) {
+
+		//Getting values from config
+		info = conf->get("info")->toStr();
+		version = conf->get("version")->toStr();
+		debuglvl = conf->get("debuglvl")->toStr();
+		comments = conf->get("comments")->toStr();
+		discribe = conf->get("discribe")->toStr();
+		adminName = conf->get("adminName")->toStr();
+		adminEmail = conf->get("adminEmail")->toStr();
+		adminNickname = conf->get("adminNickname")->toStr();
+		allowedIP = inet_addr(conf->get("allowedIP")->toStr().c_str());
+		maxChannels = static_cast<unsigned long>(conf->get("maxChannels")->toNum());
+		
+		fillOperatorsList(operators, conf->get("operators")->toObj());
+
+		delete conf;
+	}
+	else {
+
+		//Set defaults
+		info = "None";
+		version = "None";
+		debuglvl = "None";
+		comments = "None";
+		discribe = "None";
+		adminName = "None";
+		adminEmail = "None";
+		adminNickname = "None";
+		allowedIP = 0UL;
 		maxChannels = 10;
-		operators.insert(std::pair<std::string, std::string>("rmass", "hex"));
 	}
 
 	//Only for debug
@@ -111,12 +109,11 @@ port(port), timeout(1), password(password), name("IRCat")
 	std::map<std::string, std::string>::iterator end = operators.end();
 	std::map<std::string, std::string>::iterator it;
 
-	for (it = beg; it != end; it++)
-	{
+	for (it = beg; it != end; it++)	{
 		std::cout << "Login: " << it->first << " " << "Hash: " << it->second << std::endl;
 	}
 
-	//Check config for set correct values
+	//Check config for set correct values ?
 }
 
 void Server::fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators) {
