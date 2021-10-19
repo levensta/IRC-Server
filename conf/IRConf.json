@@ -7,9 +7,11 @@
 	"adminName" : "Nikita",
 	"adminNickname" : "rmass",
 	"adminEmail": "rmass@gmail.com",
+	"allowedIP": "127.0.0.1",
+	"maxChannels": 10,
 	"operators": {
-		"rmass": "",
-		"levensta": "",
-		"mhufflep": ""
+		"rmass": "123",
+		"levensta": "456",
+		"mhufflep": "789"
 	}
 }

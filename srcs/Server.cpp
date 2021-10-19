@@ -42,29 +42,40 @@ port(port), timeout(1), password(password), name("IRCat")
 		motdFile.close();
 	}
 
+	
 	JSON::JSON json("conf/IRConf.json");
+	JSON::Object *conf = NULL;
 
-	//Trying to load json file
-	json.loadFile();
+	try {
+		//Trying to load json file
+		json.loadFile();
 
-	//Parsing whole file in json object
-	JSON::Object *conf = json.parse();
+		//Parsing whole file in json object
+		conf = json.parse();
 
-	if (conf != NULL) {
+		if (conf != NULL) {
 
-		//Getting values from config
-		info = conf->get("info")->toStr();
-		version = conf->get("version")->toStr();
-		debuglvl = conf->get("debuglvl")->toStr();
-		comments = conf->get("comments")->toStr();
-		discribe = conf->get("discribe")->toStr();
-		adminName = conf->get("adminName")->toStr();
-		adminEmail = conf->get("adminEmail")->toStr();
-		adminNickname = conf->get("adminNickname")->toStr();
-		
-		fillOperatorsList(operators, conf->get("operators")->toObj());
+			//Getting values from config
+			info = conf->get("info")->toStr();
+			version = conf->get("version")->toStr();
+			debuglvl = conf->get("debuglvl")->toStr();
+			comments = conf->get("comments")->toStr();
+			discribe = conf->get("discribe")->toStr();
+			adminName = conf->get("adminName")->toStr();
+			adminEmail = conf->get("adminEmail")->toStr();
+			adminNickname = conf->get("adminNickname")->toStr();
 
-	} else {
+			allowedIP = inet_addr(conf->get("allowedIP")->toStr().c_str());
+			maxChannels = static_cast<unsigned long>(conf->get("maxChannels")->toNum());
+			
+			fillOperatorsList(operators, conf->get("operators")->toObj());
+		}
+	}
+	catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+	}
+
+	if (conf == NULL) {
 	
 		//Parse went wrong, log message and set defaults;
 		info = "";
@@ -75,8 +86,34 @@ port(port), timeout(1), password(password), name("IRCat")
 		adminName = "Nikita";
 		adminEmail = "rmass@gmail.com";
 		adminNickname = "rmass";
-		operators.insert(std::pair<std::string, std::string>("rmass", ""));
+		allowedIP = 0L;
+		maxChannels = 10;
+		operators.insert(std::pair<std::string, std::string>("rmass", "hex"));
+	}
 
+	//Only for debug
+	std::cout << "info: " << info << std::endl;
+	std::cout << "version: " << version << std::endl;
+	std::cout << "debuglvl: " << debuglvl << std::endl;
+	std::cout << "comments: " << comments << std::endl;
+	std::cout << "discribe: " << discribe << std::endl;
+	std::cout << "adminName: " << adminName << std::endl;
+	std::cout << "adminEmail: " << adminEmail << std::endl;
+	std::cout << "adminNickname: " << adminNickname << std::endl;
+	std::cout << "maxChannels: " << adminNickname << std::endl;	
+	
+	struct in_addr paddr;
+	paddr.s_addr = allowedIP;
+	std::cout << "allowedIP(int): " << allowedIP << std::endl;
+	std::cout << "allowedIP(str): " << inet_ntoa(paddr) << std::endl;
+
+	std::map<std::string, std::string>::iterator beg = operators.begin();
+	std::map<std::string, std::string>::iterator end = operators.end();
+	std::map<std::string, std::string>::iterator it;
+
+	for (it = beg; it != end; it++)
+	{
+		std::cout << "Login: " << it->first << " " << "Hash: " << it->second << std::endl;
 	}
 
 	//Check config for set correct values
@@ -91,7 +128,7 @@ void Server::fillOperatorsList(std::map<std::string, std::string> &operators, JS
 	{
 		if (it->second != NULL)
 		{
-			operators.insert(it->first, it->second->toStr());
+			operators.insert(std::pair<std::string, std::string>(it->first, it->second->toStr()));
 		}
 	}
 }
@@ -167,7 +204,7 @@ void	Server::bindSocket()
 		exit(EXIT_FAILURE);
 	}
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_addr.s_addr = INADDR_ANY; // взять из конфига TODO 127 << 24 | 0 << 16 | 0 << 8 | 1
+	sockaddr.sin_addr.s_addr = allowedIP; // INADDR_ANY; Was 0.0.0.0, now 127.0.0.1
 	sockaddr.sin_port = htons(port); // htons is necessary to convert a number to network byte order
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0)
 	{

@@ -38,15 +38,17 @@ class Server
 		const id_t								timeout;
 		std::string								password;
 		std::string								name;
-		std::string								info; // TODO взять из конфига
-		std::string								version; // TODO взять из конфига
-		std::string								debuglvl; // TODO взять из конфига
-		std::string								comments; // TODO взять из конфига
-		std::string								discribe; // TODO взять из конфига
-		std::string								adminName; // TODO взять из конфига
-		std::string								adminNickname; // TODO взять из конфига
-		std::string								adminEmail; // TODO взять из конфига
-		std::map<std::string, std::string>		operators; // TODO взять из конфига
+		std::string								info;
+		std::string								version;
+		std::string								debuglvl;
+		std::string								comments;
+		std::string								discribe;
+		std::string								adminName;
+		std::string								adminNickname;
+		std::string								adminEmail;
+		std::map<std::string, std::string>		operators;
+		unsigned long							maxChannels;
+		in_addr_t								allowedIP;
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 		std::map<std::string, Method>			commands;
