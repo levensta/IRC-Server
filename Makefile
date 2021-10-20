@@ -15,7 +15,7 @@ SOURCEFILES=	main.cpp \
 				commands/userCommands.cpp
 
 LIBJSONFOLDER = json-parser
-LIBJSONFLAGS = -ljson -L ./$(LIBJSONFOLDER) -I ./$(LIBJSONPATH)/src
+LIBJSONFLAGS = -ljson -L ./$(LIBJSONFOLDER) -I ./$(LIBJSONFOLDER)/src
 
 SOURCEFOLDER= srcs/
 
