@@ -1,4 +1,13 @@
 #include "Bot.hpp"
+#include <csignal>
+
+bool	work = true;
+
+void	sigHandler(int signum)
+{
+	(void)signum;
+	work = false;
+}
 
 int main(int argc, char *argv[]) {
 
@@ -9,6 +18,8 @@ int main(int argc, char *argv[]) {
 
 	string filename(argv[1]);
 
+	signal(SIGINT, sigHandler);
+
 	Bot bot(filename);
 	
 	if (!bot.confLoaded()) {
@@ -16,17 +27,15 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	
+
+	bot.createSockets();
 	bot.Auth();
 	
-	string APIres;
-	string IRCmsg;
-	string name;
-	while (bot.isActive()) {
-		IRCmsg = bot.receiveMessage();
-		name = bot.parseMessage(IRCmsg);
-		APIres = bot.requestAPI(name);
-		bot.sendMessage(APIres);
+	string msg;
+	while (work)
+	{
+		msg = bot.receiveMessage();
+		bot.parseMessage(msg);
 	}
-
 	return 0;
 }

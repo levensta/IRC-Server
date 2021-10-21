@@ -221,6 +221,8 @@ void	Server::listenSocket()
 
 void	Server::grabConnection()
 {
+	//std::cout<< connectedUsers.size() << std::endl;
+
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
 	if (connection >= 0)

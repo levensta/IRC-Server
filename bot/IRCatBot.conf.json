@@ -1,6 +1,6 @@
 {
-	"IRCatServerIP": "localhost",
-	"IRCatServerPort": "5050",
+	"IRCatServerIP": "127.0.0.1",
+	"IRCatServerPort": "5556",
 	"IRCatServerPass": "sss",
 	"Username": "q",
 	"Hostname": "w",

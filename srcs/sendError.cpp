@@ -144,6 +144,6 @@ int		sendError(const User &user, int err, const std::string &arg1, const std::st
 		msg += "UNKNOWN ERROR\n";
 		break;
 	}
-	send(user.getSockfd(), msg.c_str(), msg.size(), 0);
+	send(user.getSockfd(), msg.c_str(), msg.size(), MSG_NOSIGNAL);
 	return (-1);
 }

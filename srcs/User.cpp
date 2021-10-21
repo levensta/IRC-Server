@@ -117,7 +117,7 @@ bool	User::isOnChannel(const std::string &name) const
 void	User::sendMessage(const std::string &msg) const
 {
 	if (msg.size() > 0)
-		send(sockfd, msg.c_str(), msg.size(), 0);
+		send(sockfd, msg.c_str(), msg.size(), MSG_NOSIGNAL);
 }
 
 void	User::removeChannel(const std::string &name)

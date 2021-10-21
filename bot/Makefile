@@ -3,12 +3,13 @@
 NAME = bot
 
 CC = clang++
-CPPFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic
+CPPFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic -Wno-unused
 
 OBJDIR = .obj
 SRCDIR = src
-HEADERS = Bot.hpp Socket.hpp
-SOURCES = Bot.cpp Socket.cpp main.cpp
+HEADERS = Bot.hpp Socket.hpp Message.hpp utils.hpp
+SOURCES = Bot.cpp Socket.cpp main.cpp Message.cpp utils.cpp
+
 
 LIBJSONFOLDER = ../json-parser
 LIBJSONFLAGS = -ljson -L ./$(LIBJSONFOLDER) -I ./$(LIBJSONFOLDER)/src

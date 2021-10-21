@@ -1,14 +1,13 @@
 #include "Socket.hpp"
 
-Socket::Socket(const string &host, in_port_t port) : _host(host), _port(port) {
+Socket::Socket(const string &host, in_port_t port) : _fd(0), _host(host), _port(port){
 	
 	_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (_fd == -1)
+	if (_fd < 0)
 	{
 		std::cerr << "Cannot create socket" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-
 	set();
 }
 
@@ -17,13 +16,6 @@ Socket::~Socket() {
 }
 
 void Socket::set(void) {
-	const int opt = 1;
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) < 0)
-	{
-		std::cerr << "Cannot set socket options" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
 	_addr.sin_family = AF_INET;
 	_addr.sin_port = htons(_port);
 	_addr.sin_addr.s_addr = inet_addr(_host.c_str());
@@ -36,30 +28,35 @@ void Socket::set(void) {
 
 void Socket::tryToConnect(void) {
 		
-	if (connect(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) == -1) {
-		std::cerr << "Cannot set socket options" << std::endl;
+	if (connect(_fd, (struct sockaddr *)&_addr, sizeof(_addr)) < 0) {
+		std::cerr << "Cannot connect with this socket" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
 }
 
 int Socket::tryToSend(const string &msg) {
-	if (send(_fd, msg.c_str(), msg.size(), 0) < 0) {
 
+	if (send(_fd, msg.c_str(), msg.length(), MSG_NOSIGNAL) < 0) {
+		std::cerr << "Cannot send data" << std::endl;
 		return 1;
 	}
-
 	return 0;
 }
 
 string Socket::tryToRecv( void ) {
-	const int _SOCK_BUFFER_SIZE = 2048;
+	const int _SOCK_BUFFER_SIZE = 1024;
 	
-	char buf[_SOCK_BUFFER_SIZE];
-	if (recv(_fd, buf, _SOCK_BUFFER_SIZE, 0) < 0) {
-		std::cerr << "Cannot receive data" << std::endl;
-		return "";
+	char buf[_SOCK_BUFFER_SIZE] = {0};
+	
+	string _res;
+	int rd = 0;
+	while ((rd = recv(_fd, buf, _SOCK_BUFFER_SIZE - 1, 0)) > 0) {
+		buf[rd] = 0;
+		_res += buf;
 	}
-	return std::string(buf);
+	
+	return _res;
 }
 
 int Socket::getFd(void) {
@@ -69,7 +66,6 @@ int Socket::getFd(void) {
 void Socket::bind(void) {}
 Socket::Socket(const Socket &other) { *this = other; }
 Socket &Socket::operator=(const Socket &other) {
-	if (this != &other) {
-	}
+	if (this != &other) {}
 	return *this;
 }

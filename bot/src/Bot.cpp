@@ -1,4 +1,6 @@
 #include "Bot.hpp"
+#include "Message.hpp"
+#include "utils.hpp"
 
 Bot::Bot(const string &filename) 
 : _configFile(filename), _configLoaded(false), _IRCsocket(0), _APIsocket(0), _isActive(false) {
@@ -72,33 +74,33 @@ void Bot::createSockets( void ) {
 	int IRCport = static_cast<in_port_t>(strtol(_IRCatServerPort.c_str(), NULL, 10));
 	int APIport = static_cast<in_port_t>(strtol(_API_Port.c_str(), NULL, 10));
 
+	//std::cout << IRCport << " " << APIport << std::endl;
+	//std::cout << _IRCatServerIP << " " << _API_IP << std::endl;
+
 	_IRCsocket = new Socket(_IRCatServerIP, IRCport);
 	_APIsocket = new Socket(_API_IP, APIport);
 
 	_IRCsocket->tryToConnect();
 	_APIsocket->tryToConnect();
+	fcntl(_IRCsocket->getFd(), F_SETFL, O_NONBLOCK);
+	//fcntl(_APIsocket->getFd(), F_SETFL, O_NONBLOCK);
 
 	_isActive = true;
 }
 
-const string Bot::getAuthMessage() {
-	std::stringstream ss;
-
-	ss << "PASS " << _IRCatServerPass << " \r\n";
-	ss << "USER " << _username << " " << _hostname << " ";
-	ss << _servername << " " << _realname << " \r\n";
-	ss << "NICK " << _botname << " \r\n";
-
-	return ss.str();
-}
-
 void Bot::Auth(void) {
-	string msg = getAuthMessage();
 
-	_IRCsocket->tryToSend(msg);
+	string pass = "PASS " + _IRCatServerPass + "\n";
+	string user = "USER " + _username + " " + _hostname + " " + _servername + " " + _realname  + "\n";
+	string nick = "NICK " + _botname + "\n";
+	
+	_IRCsocket->tryToSend(pass);
+	_IRCsocket->tryToSend(user);
+	_IRCsocket->tryToSend(nick);
 
 	//Check for server's response
-	string reply = _IRCsocket->tryToRecv();
+	//string reply = _IRCsocket->tryToRecv();
+	//std::cout << reply << std::endl;
 }
 
 int findnth(const std::string &haystack, const std::string &needle, int nth)
@@ -126,25 +128,70 @@ string Bot::receiveMessage() {
 	return req; 
 }
 
-int Bot::parseMessage(const string &msg) {
-	int res = findnth(msg, ":", 2);
-	if (res != -1) {
-		int pos = msg.find_first_of(" ", res);
 
-		msg.substr(res, pos - res);
+void Bot::parseMessage(const string &msg) {
+
+	static string last = "";
+
+	std::queue<std::string> msgQueue = split(last + msg, '\n', true);
+	while (msgQueue.size() > 0) {
+		if (msgQueue.front().find('\n') != std::string::npos) {
+			Message m(msgQueue.front());
+
+			action(m);
+		} 
+		else {
+			last = msgQueue.front();
+		}
+		msgQueue.pop();	
 	}
-	//PING
-	//PRIVMSG
-	return 0;
 }
 
 string Bot::requestAPI( const string &name) {
 	std::stringstream ss;
 
-	ss << "GET " << getLocationURL(name) << " HTTP/1.1 \r\n";
-	
+	ss << "GET " << getLocationURL(name) << " HTTP/1.1\r\n";
+	ss << "\n\n";
+    
+	std::cout << ss.str() << std::endl;
 	_APIsocket->tryToSend(ss.str());
-	return _APIsocket->tryToRecv();
+	
+	char buf[10024] = {0};
+	sleep(5); //Remove maybe
+	int res = read(_APIsocket->getFd(), buf, 10023);
+	std::cout << "res = "<< res << std::endl;
+	std::cout << "buf = "<< buf << std::endl;
+	return string(buf);
+}
+
+string Bot::parseAPIresponse( const string &res ) {
+	int pos = res.find("\r\n\r\n");
+	if (res == "")
+		return "";
+	return res.substr(pos + 4);
+}
+
+void Bot::action( Message &m ) {
+
+	std::cout << m.getCommand() << std::endl;
+	if (m.getCommand() == "PRIVMSG") {
+
+		string res = requestAPI(m.getParams()[1]);
+		string body = parseAPIresponse(res);
+
+		char sender[512] = {0};
+		sscanf(m.getPrefix().c_str(), "%[^!]", sender);
+		string ssender(sender);
+		//std::cout << "PRIVMSG " + ssender + " :" + body << std::endl;
+		sendMessage("PRIVMSG " + ssender + " :" + body + "\n");
+	
+	} else if (m.getCommand() == "PING") {
+
+		sendMessage("PONG :" + m.getParams()[0]);
+	
+	} else {
+		//ignore other
+	}
 }
 
 bool Bot::isActive( void ) {
@@ -156,5 +203,5 @@ int Bot::sendMessage(const string &msg) {
 }
 
 const string Bot::getLocationURL(const string &name) {
-	return "/users" + name + "/location";
+	return "/users/" + name + "/location";
 }

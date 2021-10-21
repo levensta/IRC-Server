@@ -6,10 +6,17 @@
 
 #include "JSON.hpp"
 #include "Socket.hpp"
+#include "Message.hpp"
 
 using std::string;
 
 #define BUFFER_SIZE 1024
+
+struct message {
+	string cmd;
+	string msg;
+	string sender;
+};
 
 class Bot
 {
@@ -49,10 +56,11 @@ class Bot
 		void Auth( void );
 		int sendMessage( const string &msg );
 		string receiveMessage( void );
-		int parseMessage( const string &msg );
+		void parseMessage( const string &msg );
+		string parseAPIresponse( const string &res );
 		bool isActive( void );
 		string requestAPI( const string &name );
- 
+		void action (Message &m);
 		const string getAuthMessage();
 		const string getLocationURL(const string &name);
 };
