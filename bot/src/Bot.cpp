@@ -72,16 +72,14 @@ bool Bot::confLoaded( void ) {
 
 void Bot::createSockets( void ) {
 	int IRCport = static_cast<in_port_t>(strtol(_IRCatServerPort.c_str(), NULL, 10));
-	int APIport = static_cast<in_port_t>(strtol(_API_Port.c_str(), NULL, 10));
 
 	//std::cout << IRCport << " " << APIport << std::endl;
 	//std::cout << _IRCatServerIP << " " << _API_IP << std::endl;
 
 	_IRCsocket = new Socket(_IRCatServerIP, IRCport);
-	_APIsocket = new Socket(_API_IP, APIport);
 
 	_IRCsocket->tryToConnect();
-	_APIsocket->tryToConnect();
+	
 	fcntl(_IRCsocket->getFd(), F_SETFL, O_NONBLOCK);
 	//fcntl(_APIsocket->getFd(), F_SETFL, O_NONBLOCK);
 
@@ -151,6 +149,16 @@ string Bot::requestAPI( const string &name) {
 	std::stringstream ss;
 
 	ss << "GET " << getLocationURL(name) << " HTTP/1.1\r\n";
+
+	ss << "Connection: close\r\n";
+	//ss << "Host: 165.22.89.163:5000 \r\n";
+ 	//ss << "Connection: keep-alive \r\n";
+ 	//ss << "Cache-Control: max-age=0 \r\n";
+	//ss << "Upgrade-Insecure-Requests: 1\r\n";
+ 	//ss << "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.61 Safari/537.36\r\n";
+ 	//ss << "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\n";
+ 	//ss << "Accept-Encoding: gzip, deflate\r\n";
+ 	//ss << "Accept-Language': 'en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7,ja-JP;q=0.6,ja;q=0.5\r\n";
 	ss << "\n\n";
     
 	std::cout << ss.str() << std::endl;
@@ -176,13 +184,19 @@ void Bot::action( Message &m ) {
 	std::cout << m.getCommand() << std::endl;
 	if (m.getCommand() == "PRIVMSG") {
 
+		int APIport = static_cast<in_port_t>(strtol(_API_Port.c_str(), NULL, 10));
+		_APIsocket = new Socket(_API_IP, APIport);
+		_APIsocket->tryToConnect();
+		
 		string res = requestAPI(m.getParams()[1]);
+		//std::cout << res << std::endl;
 		string body = parseAPIresponse(res);
+
+		delete _APIsocket;
 
 		char sender[512] = {0};
 		sscanf(m.getPrefix().c_str(), "%[^!]", sender);
 		string ssender(sender);
-		//std::cout << "PRIVMSG " + ssender + " :" + body << std::endl;
 		sendMessage("PRIVMSG " + ssender + " :" + body + "\n");
 	
 	} else if (m.getCommand() == "PING") {
