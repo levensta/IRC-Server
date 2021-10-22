@@ -51,16 +51,18 @@ class Bot
 		Bot & operator=(const Bot & other);
 
 		bool confLoaded( void );
+		bool isActive( void );
 
 		void createSockets( void );
 		void Auth( void );
+		
 		int sendMessage( const string &msg );
-		string receiveMessage( void );
 		void parseMessage( const string &msg );
 		string parseAPIresponse( const string &res );
-		bool isActive( void );
+		string receiveMessage( void );
 		string requestAPI( const string &name );
 		void action (Message &m);
-		const string getAuthMessage();
+
+		const string getSender(const string &prefix);
 		const string getLocationURL(const string &name);
 };
