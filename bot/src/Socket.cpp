@@ -37,7 +37,7 @@ void Socket::tryToConnect(void) {
 
 int Socket::tryToSend(const string &msg) {
 
-	if (send(_fd, msg.c_str(), msg.length(), MSG_NOSIGNAL) < 0) {
+	if (send(_fd, msg.c_str(), msg.length(), IRC_NOSIGNAL) < 0) {
 		std::cerr << "Cannot send data" << std::endl;
 		return 1;
 	}

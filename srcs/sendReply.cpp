@@ -239,6 +239,6 @@ int		sendReply(const std::string &from, const User &user, int rpl, \
 		msg += "UNKNOWN REPLY\n";
 		break;
 	}
-	send(user.getSockfd(), msg.c_str(), msg.size(), MSG_NOSIGNAL);
+	send(user.getSockfd(), msg.c_str(), msg.size(), IRC_NOSIGNAL);
 	return 0;
 }

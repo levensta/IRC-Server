@@ -17,7 +17,7 @@ int Server::killCmd(const Message &msg, User &user) {
 		return (sendError(user, ERR_NOPRIVILEGES));
 	}
 
-	if (msg.getParams().size() != 3) {
+	if (msg.getParams().size() < 2) {
 		return (sendError(user, ERR_NEEDMOREPARAMS));
 	}
 

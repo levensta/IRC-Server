@@ -32,6 +32,8 @@ port(port), timeout(1), password(password)
 	commands["ADMIN"] = &Server::adminCmd;
 	commands["TIME"] = &Server::timeCmd;
 	commands["REHASH"] = &Server::rehashCmd;
+	commands["RESTART"] = &Server::restartCmd;
+	commands["KILL"] = &Server::killCmd;
 
 	// Read MOTD
 	std::string		line;
@@ -115,7 +117,7 @@ void Server::loadConfig() {
 	std::cout << "adminName: " << adminName << std::endl;
 	std::cout << "adminEmail: " << adminEmail << std::endl;
 	std::cout << "adminNickname: " << adminNickname << std::endl;
-	std::cout << "maxChannels: " << adminNickname << std::endl;	
+	std::cout << "maxChannels: " << maxChannels << std::endl;	
 	
 	struct in_addr paddr;
 	paddr.s_addr = allowedIP;
