@@ -47,6 +47,8 @@ class Server
 		std::string								adminNickname;
 		std::string								adminEmail;
 		std::map<std::string, std::string>		operators;
+		unsigned long							maxInactiveTimeout;
+		unsigned long							maxResponseTimeout;
 		unsigned long							maxChannels;
 		in_addr_t								allowedIP;
 		std::vector<std::string>				motd;

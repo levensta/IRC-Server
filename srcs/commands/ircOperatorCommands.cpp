@@ -22,7 +22,6 @@ int Server::killCmd(const Message &msg, User &user) {
 	}
 
 	string username = msg.getParams()[0];
-
 	if (username == name) {
 		return (sendError(user, ERR_CANTKILLSERVER));	
 	}
@@ -31,7 +30,7 @@ int Server::killCmd(const Message &msg, User &user) {
 	if (userToKill == NULL) {
 		return (sendError(user, ERR_NOSUCHNICK));
 	}
-
+	userToKill->sendMessage(msg.getParams()[1]);
 	userToKill->setFlag(BREAKCONNECTION);
 	return 0;
 }

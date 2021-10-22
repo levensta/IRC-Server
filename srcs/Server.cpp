@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
 Server::Server(int port, const std::string &password) :
-port(port), timeout(1), password(password), name("IRCat")
+port(port), timeout(1), password(password)
 {
 	commands["PASS"] = &Server::passCmd;
 	commands["NICK"] = &Server::nickCmd;
@@ -47,7 +47,6 @@ port(port), timeout(1), password(password), name("IRCat")
 	//Check config for set correct values ?
 }
 
-
 void Server::loadConfig() {
 	
 	static bool wasLoaded = false;
@@ -69,6 +68,7 @@ void Server::loadConfig() {
 	if (conf != NULL) {
 
 		//Getting values from config
+		name = conf->get("servername")->toStr();
 		info = conf->get("info")->toStr();
 		version = conf->get("version")->toStr();
 		debuglvl = conf->get("debuglvl")->toStr();
@@ -79,7 +79,10 @@ void Server::loadConfig() {
 		adminNickname = conf->get("adminNickname")->toStr();
 		allowedIP = inet_addr(conf->get("allowedIP")->toStr().c_str());
 		maxChannels = static_cast<unsigned long>(conf->get("maxChannels")->toNum());
+		maxInactiveTimeout = static_cast<unsigned long>(conf->get("maxInactiveTimeout")->toNum());
+		maxResponseTimeout = static_cast<unsigned long>(conf->get("maxResponseTimeout")->toNum());
 		
+		operators.clear();
 		fillOperatorsList(operators, conf->get("operators")->toObj());
 
 		delete conf;
@@ -88,6 +91,7 @@ void Server::loadConfig() {
 	else if (wasLoaded != true) {
 
 		//Set defaults
+		name = "IRCat";
 		info = "None";
 		version = "None";
 		debuglvl = "None";
@@ -98,6 +102,8 @@ void Server::loadConfig() {
 		adminNickname = "None";
 		allowedIP = 0UL;
 		maxChannels = 10;
+		maxInactiveTimeout = 120;
+		maxResponseTimeout = 60;
 	}
 
 	//Only for debug
@@ -359,15 +365,14 @@ void	Server::checkConnectionWithUsers()
 	{
 		if (this->connectedUsers[i]->getFlags() & REGISTERED)
 		{
-			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
+			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > maxInactiveTimeout )
 			{
 				this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
 				this->connectedUsers[i]->updateTimeAfterPing();
 				this->connectedUsers[i]->updateTimeOfLastMessage();
 				this->connectedUsers[i]->setFlag(PINGING);
 			}
-			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > 60) // время взять из конфига todo
-				connectedUsers[i]->setFlag(BREAKCONNECTION);
+			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > maxResponseTimeout )
 		}
 	}
 }
