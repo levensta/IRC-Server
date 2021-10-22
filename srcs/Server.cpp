@@ -32,8 +32,6 @@ port(port), timeout(1), password(password)
 	commands["ADMIN"] = &Server::adminCmd;
 	commands["TIME"] = &Server::timeCmd;
 	commands["REHASH"] = &Server::rehashCmd;
-	commands["RESTART"] = &Server::restartCmd;
-	commands["KILL"] = &Server::killCmd;
 
 	// Read MOTD
 	std::string		line;
@@ -118,6 +116,8 @@ void Server::loadConfig() {
 	std::cout << "adminEmail: " << adminEmail << std::endl;
 	std::cout << "adminNickname: " << adminNickname << std::endl;
 	std::cout << "maxChannels: " << maxChannels << std::endl;	
+	std::cout << "maxInactiveTimeout: " << maxInactiveTimeout << std::endl;	
+	std::cout << "maxResponseTimeout: " << maxResponseTimeout << std::endl;	
 	
 	struct in_addr paddr;
 	paddr.s_addr = allowedIP;
@@ -367,14 +367,15 @@ void	Server::checkConnectionWithUsers()
 	{
 		if (this->connectedUsers[i]->getFlags() & REGISTERED)
 		{
-			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > maxInactiveTimeout )
+			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > static_cast<time_t>(maxInactiveTimeout) )
 			{
 				this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
 				this->connectedUsers[i]->updateTimeAfterPing();
 				this->connectedUsers[i]->updateTimeOfLastMessage();
 				this->connectedUsers[i]->setFlag(PINGING);
 			}
-			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > maxResponseTimeout )
+			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > static_cast<time_t>(maxResponseTimeout) )
+				connectedUsers[i]->setFlag(BREAKCONNECTION);
 		}
 	}
 }

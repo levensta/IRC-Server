@@ -19,6 +19,8 @@ SOURCEFILES=	main.cpp \
 LIBJSONFOLDER = json-parser
 LIBJSONFLAGS = -ljson -L ./$(LIBJSONFOLDER) -I ./$(LIBJSONFOLDER)/src
 
+BOTFOLDER = bot/
+
 SOURCEFOLDER= srcs/
 
 OSOURCEFOLDER= objects/
@@ -29,7 +31,7 @@ SOURCE= $(addprefix $(SOURCEFOLDER), $(SOURCEFILES))
 
 OSOURCE= $(addprefix $(OSOURCEFOLDER), $(SOURCEFILES:.cpp=.o))
 
-all: libjson $(NAME)
+all: libjson bot $(NAME)
 
 $(OSOURCEFOLDER):
 	mkdir objects
@@ -39,17 +41,23 @@ $(OSOURCEFOLDER)%.o: $(SOURCEFOLDER)%.cpp
 	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER) -I ./$(LIBJSONFOLDER)/src
 
 libjson:
+	@if ! [ "$(ls $(LIBJSONFOLDER))" ] ; then git submodule init; fi
 	$(MAKE) -C $(LIBJSONFOLDER) all
+
+bot:
+	$(MAKE) -C $(BOTFOLDER) all
 
 $(NAME): $(OSOURCEFOLDER) $(OSOURCE)
 	clang++ $(OSOURCE) -o $(NAME) $(LIBJSONFLAGS)
 
 clean:
 	$(MAKE) -C $(LIBJSONFOLDER) clean
+	$(MAKE) -C $(BOTFOLDER) clean
 	rm -rf $(OSOURCEFOLDER)
 
 fclean: clean
 	$(MAKE) -C $(LIBJSONFOLDER) fclean
+	$(MAKE) -C $(BOTFOLDER) fclean
 	rm -rf $(NAME)
 
 re: fclean all

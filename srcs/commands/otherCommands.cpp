@@ -88,6 +88,7 @@ int		Server::infoCmd(const Message &msg, User &user)
 	std::queue<std::string>	lines = split(discribe, '\n', false);
 	for (;lines.size() > 0; lines.pop())
 		sendReply(user.getServername(), user, RPL_INFO, lines.front());
+	sendReply(user.getServername(), user, RPL_INFO, info);
 	return (sendReply(user.getServername(), user, RPL_ENDOFINFO));
 }
 

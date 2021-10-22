@@ -7,6 +7,8 @@
 
 namespace hash
 {
+	typedef unsigned int uint;
+
 	typedef struct
 	{
 		unsigned char	data[64];
