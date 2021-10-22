@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Hash.hpp"
 
 void	Server::sendMOTD(const User &user) const
 {
@@ -88,7 +89,7 @@ int		Server::operCmd(const Message &msg, User &user)
 		try
 		{
 			std::string	pass = operators.at(msg.getParams()[0]);
-			if (msg.getParams()[1] == pass)
+			if (hash::hash(msg.getParams()[1]) == pass)
 			{
 				user.setFlag(IRCOPERATOR);
 				return sendReply(user.getServername(), user, RPL_YOUREOPER);

@@ -9,6 +9,7 @@ SOURCEFILES=	main.cpp \
 				sendReply.cpp \
 				Channel.cpp \
 				History.cpp \
+				Hash.cpp \
 				commands/channelCommands.cpp \
 				commands/otherCommands.cpp \
 				commands/registrationCommands.cpp \

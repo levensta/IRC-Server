@@ -24,6 +24,7 @@ class History;
 #include "JSON.hpp"
 
 #define	DISCONNECT	-2
+#define IRC_NOSIGNAL 0
 
 typedef  int (Server::*Method) (const Message &, User &);
 
