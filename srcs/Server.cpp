@@ -31,6 +31,7 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["INFO"] = &Server::infoCmd;
 	commands["ADMIN"] = &Server::adminCmd;
 	commands["TIME"] = &Server::timeCmd;
+	commands["REHASH"] = &Server::rehashCmd;
 
 	// Read MOTD
 	std::string		line;
@@ -42,6 +43,15 @@ port(port), timeout(1), password(password), name("IRCat")
 		motdFile.close();
 	}
 	
+	loadConfig();
+	//Check config for set correct values ?
+}
+
+
+void Server::loadConfig() {
+	
+	static bool wasLoaded = false;
+
 	JSON::JSON json("conf/IRConf.json");
 	JSON::Object *conf = NULL;
 
@@ -73,8 +83,9 @@ port(port), timeout(1), password(password), name("IRCat")
 		fillOperatorsList(operators, conf->get("operators")->toObj());
 
 		delete conf;
+		wasLoaded = true;
 	}
-	else {
+	else if (wasLoaded != true) {
 
 		//Set defaults
 		info = "None";
@@ -112,8 +123,6 @@ port(port), timeout(1), password(password), name("IRCat")
 	for (it = beg; it != end; it++)	{
 		std::cout << "Login: " << it->first << " " << "Hash: " << it->second << std::endl;
 	}
-
-	//Check config for set correct values ?
 }
 
 void Server::fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators) {

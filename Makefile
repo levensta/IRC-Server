@@ -12,7 +12,8 @@ SOURCEFILES=	main.cpp \
 				commands/channelCommands.cpp \
 				commands/otherCommands.cpp \
 				commands/registrationCommands.cpp \
-				commands/userCommands.cpp
+				commands/userCommands.cpp \
+				commands/ircOperatorCommands.cpp
 
 LIBJSONFOLDER = json-parser
 LIBJSONFLAGS = -ljson -L ./$(LIBJSONFOLDER) -I ./$(LIBJSONFOLDER)/src

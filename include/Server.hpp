@@ -88,6 +88,9 @@ class Server
 		int										infoCmd(const Message &msg, User &user);
 		int										adminCmd(const Message &msg, User &user);
 		int										timeCmd(const Message &msg, User &user);
+		int										rehashCmd(const Message &msg, User &user);
+		int										killCmd(const Message &msg, User &user);
+		int										restartCmd(const Message &msg, User &user);
 
 		// Helpful things for commands
 
@@ -116,7 +119,7 @@ class Server
 		void									deleteEmptyChannels();
 		void									checkConnectionWithUsers();
 		void 									fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators);
-
+		void									loadConfig( void );
 
 		// Other methods
 
