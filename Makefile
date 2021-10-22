@@ -41,7 +41,7 @@ $(OSOURCEFOLDER)%.o: $(SOURCEFOLDER)%.cpp
 	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER) -I ./$(LIBJSONFOLDER)/src
 
 libjson:
-	@if ! [ "$(ls $(LIBJSONFOLDER))" ] ; then git submodule init; fi
+	@if ! [ "$(ls $(LIBJSONFOLDER))" ] ; then git submodule update --init; fi
 	$(MAKE) -C $(LIBJSONFOLDER) all
 
 bot:
