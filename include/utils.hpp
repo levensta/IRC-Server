@@ -7,6 +7,7 @@ class Message;
 #include <algorithm>
 #include <iostream>
 #include "Message.hpp"
+#include <cstring>
 
 bool						newLine(char c, char sep);
 bool						notNewLine(char c, char sep);
