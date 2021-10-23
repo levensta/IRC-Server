@@ -47,7 +47,7 @@ int		Server::nickCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)
 		sendError(user, ERR_NEEDMOREPARAMS, msg.getCommand());
-	else if (!isValidNick(msg.getParams()[0]))
+	else if (!isValidNick(msg.getParams()[0]) || msg.getParams()[0] == this->name)
 		sendError(user, ERR_ERRONEUSNICKNAME, msg.getParams()[0]);
 	else if (this->containsNickname(msg.getParams()[0]))
 		sendError(user, ERR_NICKNAMEINUSE, msg.getParams()[0]);

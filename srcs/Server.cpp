@@ -32,6 +32,8 @@ port(port), timeout(1), password(password)
 	commands["ADMIN"] = &Server::adminCmd;
 	commands["TIME"] = &Server::timeCmd;
 	commands["REHASH"] = &Server::rehashCmd;
+	commands["RESTART"] = &Server::restartCmd;
+	commands["KILL"] = &Server::killCmd;
 
 	// Read MOTD
 	std::string		line;

@@ -25,10 +25,10 @@ class History;
 
 #define	DISCONNECT	-2
 
-#ifdef LINUX
-#define IRC_NOSIGNAL MSG_NOSIGNAL
-#else
+#ifdef __APPLE__
 #define IRC_NOSIGNAL SO_NOSIGPIPE
+#else
+#define IRC_NOSIGNAL MSG_NOSIGNAL
 #endif
 
 typedef  int (Server::*Method) (const Message &, User &);

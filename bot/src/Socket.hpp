@@ -15,7 +15,11 @@
 #include <sys/types.h>
 #include <netdb.h>
 
-#define IRC_NOSIGNAL 0
+#ifdef __APPLE__
+#define IRC_NOSIGNAL SO_NOSIGPIPE
+#else
+#define IRC_NOSIGNAL MSG_NOSIGNAL
+#endif
 
 using std::string;
 

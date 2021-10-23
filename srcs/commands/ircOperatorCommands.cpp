@@ -30,7 +30,7 @@ int Server::killCmd(const Message &msg, User &user) {
 	if (userToKill == NULL) {
 		return (sendError(user, ERR_NOSUCHNICK));
 	}
-	userToKill->sendMessage(msg.getParams()[1]);
+	userToKill->sendMessage(msg.getParams()[1] + "\n");
 	userToKill->setFlag(BREAKCONNECTION);
 	return 0;
 }
