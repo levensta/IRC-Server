@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <netdb.h>
 
+#define IRC_NOSIGNAL 0
+
 using std::string;
 
 class Socket

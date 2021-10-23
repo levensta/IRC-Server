@@ -72,7 +72,6 @@ int		Server::userCmd(const Message &msg, User &user)
 	else
 	{
 		user.setUsername(msg.getParams()[0]);
-		user.setServername(name);
 		user.setRealname(msg.getParams()[3]);
 	}
 	return (checkConnection(user));

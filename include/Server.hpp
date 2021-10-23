@@ -24,7 +24,12 @@ class History;
 #include "JSON.hpp"
 
 #define	DISCONNECT	-2
-#define IRC_NOSIGNAL 0
+
+#ifdef LINUX
+#define IRC_NOSIGNAL MSG_NOSIGNAL
+#else
+#define IRC_NOSIGNAL SO_NOSIGPIPE
+#endif
 
 typedef  int (Server::*Method) (const Message &, User &);
 
@@ -43,7 +48,7 @@ class Server
 		std::string								version;
 		std::string								debuglvl;
 		std::string								comments;
-		std::string								discribe;
+		std::string								describe;
 		std::string								adminName;
 		std::string								adminNickname;
 		std::string								adminEmail;

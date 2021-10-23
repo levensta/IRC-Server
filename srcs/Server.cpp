@@ -73,7 +73,7 @@ void Server::loadConfig() {
 		version = conf->get("version")->toStr();
 		debuglvl = conf->get("debuglvl")->toStr();
 		comments = conf->get("comments")->toStr();
-		discribe = conf->get("discribe")->toStr();
+		describe = conf->get("describe")->toStr();
 		adminName = conf->get("adminName")->toStr();
 		adminEmail = conf->get("adminEmail")->toStr();
 		adminNickname = conf->get("adminNickname")->toStr();
@@ -96,7 +96,7 @@ void Server::loadConfig() {
 		version = "None";
 		debuglvl = "None";
 		comments = "None";
-		discribe = "None";
+		describe = "None";
 		adminName = "None";
 		adminEmail = "None";
 		adminNickname = "None";
@@ -107,11 +107,13 @@ void Server::loadConfig() {
 	}
 
 	//Only for debug
+	std::cout << "CONFIG" << std::endl;
+	std::cout << "servername: " << name << std::endl;
 	std::cout << "info: " << info << std::endl;
 	std::cout << "version: " << version << std::endl;
 	std::cout << "debuglvl: " << debuglvl << std::endl;
 	std::cout << "comments: " << comments << std::endl;
-	std::cout << "discribe: " << discribe << std::endl;
+	std::cout << "describe: " << describe << std::endl;
 	std::cout << "adminName: " << adminName << std::endl;
 	std::cout << "adminEmail: " << adminEmail << std::endl;
 	std::cout << "adminNickname: " << adminNickname << std::endl;
@@ -251,7 +253,7 @@ void	Server::grabConnection()
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(new User(connection, host));
+		connectedUsers.push_back(new User(connection, host, name));
 	}
 }
 

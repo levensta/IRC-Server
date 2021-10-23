@@ -1,7 +1,7 @@
 #include "User.hpp"
 
-User::User(int sockfd, const std::string &host) :
-sockfd(sockfd), hostname(host), registrationTime(time(0)), flags(RECEIVENOTICE)
+User::User(int sockfd, const std::string &host, std::string &servername) :
+sockfd(sockfd), hostname(host), servername(servername), registrationTime(time(0)), flags(RECEIVENOTICE)
 {}
 
 User::~User()
@@ -156,10 +156,10 @@ void	User::setHostname(const std::string &hostname)
 	this->hostname = hostname;
 }
 
-void	User::setServername(const std::string &servername)
-{
-	this->servername = servername;
-}
+// void	User::setServername(const std::string &servername)
+// {
+// 	this->servername = servername;
+// }
 
 void	User::setNickname(const std::string &nickname)
 {

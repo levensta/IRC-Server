@@ -1,5 +1,11 @@
 NAME= ircserv
 
+OS= $(shell uname)
+
+ifeq ($(OS), Linux)
+	OS_FLAG		= -D LINUX
+endif
+
 SOURCEFILES=	main.cpp \
 				Server.cpp \
 				User.cpp \
@@ -38,7 +44,7 @@ $(OSOURCEFOLDER):
 	mkdir objects/commands
 
 $(OSOURCEFOLDER)%.o: $(SOURCEFOLDER)%.cpp
-	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER) -I ./$(LIBJSONFOLDER)/src
+	clang++ -Wall -Werror -Wextra -c $< -o $@ -std=c++98 -I $(INCLUDEFOLDER) -I ./$(LIBJSONFOLDER)/src $(OS_FLAG)
 
 libjson:
 	@if ! [ "$(ls $(LIBJSONFOLDER))" ] ; then git submodule update --init; fi

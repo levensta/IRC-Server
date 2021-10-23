@@ -76,16 +76,16 @@ int		Server::userhostCmd(const Message &msg, User &user)
 
 int		Server::versionCmd(const Message &msg, User &user)
 {
-	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+	if (msg.getParams().size() > 0 && msg.getParams()[0] != user.getServername())
 		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
 	return (sendReply(user.getServername(), user, RPL_VERSION, version, debuglvl, name, comments));
 }
 
 int		Server::infoCmd(const Message &msg, User &user)
 {
-	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+	if (msg.getParams().size() > 0 && msg.getParams()[0] != user.getServername())
 		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
-	std::queue<std::string>	lines = split(discribe, '\n', false);
+	std::queue<std::string>	lines = split(describe, '\n', false);
 	for (;lines.size() > 0; lines.pop())
 		sendReply(user.getServername(), user, RPL_INFO, lines.front());
 	sendReply(user.getServername(), user, RPL_INFO, info);
@@ -94,7 +94,7 @@ int		Server::infoCmd(const Message &msg, User &user)
 
 int		Server::adminCmd(const Message &msg, User &user)
 {
-	if (msg.getParams().size() == 0 || msg.getParams()[0] != user.getServername())
+	if (msg.getParams().size() > 0 && msg.getParams()[0] != user.getServername())
 		return (sendError(user, ERR_NOSUCHSERVER, msg.getParams().size() == 0 ? "" : msg.getParams()[0]));
 	sendReply(user.getServername(), user, RPL_ADMINME, user.getServername());
 	sendReply(user.getServername(), user, RPL_ADMINLOC1, adminName);
