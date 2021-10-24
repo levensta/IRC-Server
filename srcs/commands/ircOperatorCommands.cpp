@@ -49,5 +49,14 @@ int Server::restartCmd(const Message &msg, User &user) {
 	}
 
 	loadConfig();
+	close(sockfd);
+	// Create a socket (IPv4, TCP)
+	createSocket();
+
+	// Listen to port on any address
+	bindSocket();
+
+	// Start listening.
+	listenSocket();
 	return 0;
 }

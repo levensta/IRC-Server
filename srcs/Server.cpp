@@ -238,6 +238,7 @@ void	Server::listenSocket()
 		std::cout << "Failed to listen on socket. errno: " << errno << std::endl;
 		exit(EXIT_FAILURE);
 	}
+	fcntl(sockfd, F_SETFL, O_NONBLOCK);
 }
 
 void	Server::grabConnection()

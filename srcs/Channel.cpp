@@ -211,7 +211,7 @@ void	Channel::removeOperator(const User &user)
 		if (operators.size() == 0 && users.size() > 0)
 		{
 			operators.push_back(users[0]);
-			sendMessage("MODE " + this->name + " +o "  + user.getNickname() + "\n", user, true);
+			sendMessage("MODE " + this->name + " +o "  + users[0]->getNickname() + "\n", user, true);
 		}
 	}
 }
