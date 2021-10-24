@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Hash.hpp"
 
 void	Server::sendMOTD(const User &user) const
 {
@@ -46,7 +47,7 @@ int		Server::nickCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)
 		sendError(user, ERR_NEEDMOREPARAMS, msg.getCommand());
-	else if (!isValidNick(msg.getParams()[0]))
+	else if (!isValidNick(msg.getParams()[0]) || msg.getParams()[0] == this->name)
 		sendError(user, ERR_ERRONEUSNICKNAME, msg.getParams()[0]);
 	else if (this->containsNickname(msg.getParams()[0]))
 		sendError(user, ERR_NICKNAMEINUSE, msg.getParams()[0]);
@@ -71,7 +72,6 @@ int		Server::userCmd(const Message &msg, User &user)
 	else
 	{
 		user.setUsername(msg.getParams()[0]);
-		user.setServername(name);
 		user.setRealname(msg.getParams()[3]);
 	}
 	return (checkConnection(user));
@@ -88,7 +88,7 @@ int		Server::operCmd(const Message &msg, User &user)
 		try
 		{
 			std::string	pass = operators.at(msg.getParams()[0]);
-			if (msg.getParams()[1] == pass)
+			if (hash::hash(msg.getParams()[1]) == pass)
 			{
 				user.setFlag(IRCOPERATOR);
 				return sendReply(user.getServername(), user, RPL_YOUREOPER);

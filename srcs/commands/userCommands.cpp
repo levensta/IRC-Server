@@ -166,7 +166,7 @@ int		Server::whoisCmd(const Message &msg, User &user)
 int		Server::whowasCmd(const Message &msg, User &user)
 {
 	if (msg.getParams().size() == 0)
-		sendError(user, ERR_NONICKNAMEGIVEN);
+		return (sendError(user, ERR_NONICKNAMEGIVEN));
 
 	else if (!this->containsNickname(msg.getParams()[0]))
 	{
@@ -177,7 +177,7 @@ int		Server::whowasCmd(const Message &msg, User &user)
 		{
 			int n = 0;
 			if (msg.getParams().size() > 1)
-				n = atoi(msg.getParams()[0].c_str());
+				n = atoi(msg.getParams()[1].c_str());
 			n = (n == 0) ? historyList.size() : n;
 
 			for (int i = 0; i < n; ++i)

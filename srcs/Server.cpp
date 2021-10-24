@@ -1,7 +1,7 @@
 #include "Server.hpp"
 
 Server::Server(int port, const std::string &password) :
-port(port), timeout(1), password(password), name("IRCat")
+port(port), timeout(1), password(password)
 {
 	commands["PASS"] = &Server::passCmd;
 	commands["NICK"] = &Server::nickCmd;
@@ -31,6 +31,9 @@ port(port), timeout(1), password(password), name("IRCat")
 	commands["INFO"] = &Server::infoCmd;
 	commands["ADMIN"] = &Server::adminCmd;
 	commands["TIME"] = &Server::timeCmd;
+	commands["REHASH"] = &Server::rehashCmd;
+	commands["RESTART"] = &Server::restartCmd;
+	commands["KILL"] = &Server::killCmd;
 
 	// Read MOTD
 	std::string		line;
@@ -40,6 +43,111 @@ port(port), timeout(1), password(password), name("IRCat")
 		while (getline(motdFile, line))
 			motd.push_back(line);
 		motdFile.close();
+	}
+	
+	loadConfig();
+	//Check config for set correct values ?
+}
+
+void Server::loadConfig() {
+	
+	static bool wasLoaded = false;
+
+	JSON::JSON json("conf/IRConf.json");
+	JSON::Object *conf = NULL;
+
+	try {
+		//Trying to load json file
+		json.loadFile();
+
+		//Parsing whole file in json object
+		conf = json.parse();
+	} 
+	catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+	}
+
+	if (conf != NULL) {
+
+		//Getting values from config
+		name = conf->get("servername")->toStr();
+		info = conf->get("info")->toStr();
+		version = conf->get("version")->toStr();
+		debuglvl = conf->get("debuglvl")->toStr();
+		comments = conf->get("comments")->toStr();
+		describe = conf->get("describe")->toStr();
+		adminName = conf->get("adminName")->toStr();
+		adminEmail = conf->get("adminEmail")->toStr();
+		adminNickname = conf->get("adminNickname")->toStr();
+		allowedIP = inet_addr(conf->get("allowedIP")->toStr().c_str());
+		maxChannels = static_cast<unsigned long>(conf->get("maxChannels")->toNum());
+		maxInactiveTimeout = static_cast<unsigned long>(conf->get("maxInactiveTimeout")->toNum());
+		maxResponseTimeout = static_cast<unsigned long>(conf->get("maxResponseTimeout")->toNum());
+		
+		operators.clear();
+		fillOperatorsList(operators, conf->get("operators")->toObj());
+
+		delete conf;
+		wasLoaded = true;
+	}
+	else if (wasLoaded != true) {
+
+		//Set defaults
+		name = "IRCat";
+		info = "None";
+		version = "None";
+		debuglvl = "None";
+		comments = "None";
+		describe = "None";
+		adminName = "None";
+		adminEmail = "None";
+		adminNickname = "None";
+		allowedIP = 0UL;
+		maxChannels = 10;
+		maxInactiveTimeout = 120;
+		maxResponseTimeout = 60;
+	}
+
+	//Only for debug
+	std::cout << "CONFIG" << std::endl;
+	std::cout << "servername: " << name << std::endl;
+	std::cout << "info: " << info << std::endl;
+	std::cout << "version: " << version << std::endl;
+	std::cout << "debuglvl: " << debuglvl << std::endl;
+	std::cout << "comments: " << comments << std::endl;
+	std::cout << "describe: " << describe << std::endl;
+	std::cout << "adminName: " << adminName << std::endl;
+	std::cout << "adminEmail: " << adminEmail << std::endl;
+	std::cout << "adminNickname: " << adminNickname << std::endl;
+	std::cout << "maxChannels: " << maxChannels << std::endl;	
+	std::cout << "maxInactiveTimeout: " << maxInactiveTimeout << std::endl;	
+	std::cout << "maxResponseTimeout: " << maxResponseTimeout << std::endl;	
+	
+	struct in_addr paddr;
+	paddr.s_addr = allowedIP;
+	std::cout << "allowedIP(int): " << allowedIP << std::endl;
+	std::cout << "allowedIP(str): " << inet_ntoa(paddr) << std::endl;
+
+	std::map<std::string, std::string>::iterator beg = operators.begin();
+	std::map<std::string, std::string>::iterator end = operators.end();
+	std::map<std::string, std::string>::iterator it;
+
+	for (it = beg; it != end; it++)	{
+		std::cout << "Login: " << it->first << " " << "Hash: " << it->second << std::endl;
+	}
+}
+
+void Server::fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators) {
+	std::map<std::string, JSON::AType *>::iterator beg = confOperators->begin();
+	std::map<std::string, JSON::AType *>::iterator end = confOperators->end();
+	std::map<std::string, JSON::AType *>::iterator it;
+
+	for (it = beg; it != end; it++)
+	{
+		if (it->second != NULL)
+		{
+			operators.insert(std::pair<std::string, std::string>(it->first, it->second->toStr()));
+		}
 	}
 }
 
@@ -114,7 +222,7 @@ void	Server::bindSocket()
 		exit(EXIT_FAILURE);
 	}
 	sockaddr.sin_family = AF_INET;
-	sockaddr.sin_addr.s_addr = INADDR_ANY; // взять из конфига TODO 127 << 24 | 0 << 16 | 0 << 8 | 1
+	sockaddr.sin_addr.s_addr = allowedIP; // INADDR_ANY; Was 0.0.0.0, now 127.0.0.1
 	sockaddr.sin_port = htons(port); // htons is necessary to convert a number to network byte order
 	if (bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0)
 	{
@@ -134,6 +242,8 @@ void	Server::listenSocket()
 
 void	Server::grabConnection()
 {
+	//std::cout<< connectedUsers.size() << std::endl;
+
 	size_t addrlen = sizeof(sockaddr);
 	int connection = accept(sockfd, (struct sockaddr*)&sockaddr, (socklen_t*)&addrlen);
 	if (connection >= 0)
@@ -145,7 +255,7 @@ void	Server::grabConnection()
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		userFDs.push_back(pfd);
-		connectedUsers.push_back(new User(connection, host));
+		connectedUsers.push_back(new User(connection, host, name));
 	}
 }
 
@@ -261,14 +371,14 @@ void	Server::checkConnectionWithUsers()
 	{
 		if (this->connectedUsers[i]->getFlags() & REGISTERED)
 		{
-			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > 120 ) // время взять из конфига todo
+			if (time(0) - this->connectedUsers[i]->getTimeOfLastMessage() > static_cast<time_t>(maxInactiveTimeout) )
 			{
 				this->connectedUsers[i]->sendMessage(":" + this->name + " PING :" + this->name + "\n");
 				this->connectedUsers[i]->updateTimeAfterPing();
 				this->connectedUsers[i]->updateTimeOfLastMessage();
 				this->connectedUsers[i]->setFlag(PINGING);
 			}
-			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > 60) // время взять из конфига todo
+			if ((connectedUsers[i]->getFlags() & PINGING) && time(0) - connectedUsers[i]->getTimeAfterPing() > static_cast<time_t>(maxResponseTimeout) )
 				connectedUsers[i]->setFlag(BREAKCONNECTION);
 		}
 	}

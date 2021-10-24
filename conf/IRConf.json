@@ -1,0 +1,20 @@
+{
+	"servername": "IRCat",
+	"info": "IRC server based on TCP/IP protocol to rfc1459 standard",
+	"version": "v1.2",
+	"debuglvl": "0",
+	"comments": "release",
+	"describe": "describe",
+	"adminName": "Nikita",
+	"adminNickname": "rmass",
+	"adminEmail": "rmass@gmail.com",
+	"allowedIP": "127.0.0.1",
+	"maxChannels": 10,
+	"maxInactiveTimeout": 120,
+	"maxResponseTimeout": 60,
+	"operators": {
+		"levensta": "b3a8e0e1f9ab1bfe3a36f231f676f78bb30a519d2b21e6c530c0eee8ebb4a5d0",
+		"mhufflep": "b3a8e0e1f9ab1bfe3a36f231f676f78bb30a519d2b21e6c530c0eee8ebb4a5d0",
+		"rmass": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+	}
+}

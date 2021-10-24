@@ -1,7 +1,7 @@
 #include "User.hpp"
 
-User::User(int sockfd, const std::string &host) :
-sockfd(sockfd), hostname(host), registrationTime(time(0)), flags(RECEIVENOTICE)
+User::User(int sockfd, const std::string &host, std::string &servername) :
+sockfd(sockfd), hostname(host), servername(servername), registrationTime(time(0)), flags(RECEIVENOTICE)
 {}
 
 User::~User()
@@ -97,6 +97,8 @@ int		User::readMessage()
 		if (text.find('\n') != std::string::npos)
 			break;
 	}
+	if (text.length() > 512)
+		text = text.substr(0, 510) + "\r\n";
 	if (bytesRead == 0)
 		return (DISCONNECT);
 	while (text.find("\r\n") != std::string::npos)
@@ -117,7 +119,7 @@ bool	User::isOnChannel(const std::string &name) const
 void	User::sendMessage(const std::string &msg) const
 {
 	if (msg.size() > 0)
-		send(sockfd, msg.c_str(), msg.size(), 0);
+		send(sockfd, msg.c_str(), msg.size(), IRC_NOSIGNAL);
 }
 
 void	User::removeChannel(const std::string &name)
@@ -156,10 +158,10 @@ void	User::setHostname(const std::string &hostname)
 	this->hostname = hostname;
 }
 
-void	User::setServername(const std::string &servername)
-{
-	this->servername = servername;
-}
+// void	User::setServername(const std::string &servername)
+// {
+// 	this->servername = servername;
+// }
 
 void	User::setNickname(const std::string &nickname)
 {

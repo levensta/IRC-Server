@@ -1,0 +1,14 @@
+{
+	"IRCatServerIP": "127.0.0.1",
+	"IRCatServerPort": "5556",
+	"IRCatServerPass": "qwe",
+	"Username": "where_is_bot",
+	"Hostname": "127.0.0.1",
+	"Servername": "IRCat",
+	"Realname": "where_is_bot",
+	"Nickname": "wherebot",
+	"API-protocol": "http",
+	"API-ip": "165.22.89.163",
+	"API-port": "5000",
+	"Botname": "wherebot"
+}

@@ -217,7 +217,7 @@ int		Server::joinCmd(const Message &msg, User &user)
 				keys.pop();
 			if (!isValidChannelName(chans.front()))
 				sendError(user, ERR_NOSUCHCHANNEL, chans.front());
-			else if (user.getChannels().size() >= 10) // TODO: add maxsize to config
+			else if (user.getChannels().size() >= maxChannels)
 				sendError(user, ERR_TOOMANYCHANNELS, chans.front());
 			else if (connectToChannel(user, chans.front(), key) == 1)
 				user.addChannel(*(channels.at(chans.front())));

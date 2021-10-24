@@ -38,7 +38,7 @@ class User
 		std::string							nickname;
 		std::string							username;
 		std::string							hostname;
-		std::string							servername;
+		const std::string					&servername;
 		std::string							realname;
 		time_t								registrationTime;
 		time_t								timeOfLastMessage;
@@ -53,7 +53,7 @@ class User
 		User(const User& copy);
 		User	&operator=(const User& other);
 	public:
-		User(int sockfd, const std::string &host);
+		User(int sockfd, const std::string &host, std::string &servername);
 		~User();
 
 		// Getters
@@ -81,7 +81,6 @@ class User
 		void								setPassword(const std::string &pass);
 		void								setUsername(const std::string &username);
 		void								setHostname(const std::string &hostname);
-		void								setServername(const std::string &servername);
 		void								setNickname(const std::string &nickname);
 		void								setRealname(const std::string &realname);
 		void								setAwayMessage(const std::string &msg);

@@ -21,8 +21,15 @@ class History;
 #include "Channel.hpp"
 #include "sendError.hpp"
 #include "sendReply.hpp"
+#include "JSON.hpp"
 
 #define	DISCONNECT	-2
+
+#ifdef __APPLE__
+#define IRC_NOSIGNAL SO_NOSIGPIPE
+#else
+#define IRC_NOSIGNAL MSG_NOSIGNAL
+#endif
 
 typedef  int (Server::*Method) (const Message &, User &);
 
@@ -37,15 +44,19 @@ class Server
 		const id_t								timeout;
 		std::string								password;
 		std::string								name;
-		std::string								info; // TODO взять из конфига
-		std::string								version; // TODO взять из конфига
-		std::string								debuglvl; // TODO взять из конфига
-		std::string								comments; // TODO взять из конфига
-		std::string								discribe; // TODO взять из конфига
-		std::string								adminName; // TODO взять из конфига
-		std::string								adminNickname; // TODO взять из конфига
-		std::string								adminEMail; // TODO взять из конфига
-		std::map<std::string, std::string>		operators; // TODO взять из конфига
+		std::string								info;
+		std::string								version;
+		std::string								debuglvl;
+		std::string								comments;
+		std::string								describe;
+		std::string								adminName;
+		std::string								adminNickname;
+		std::string								adminEmail;
+		std::map<std::string, std::string>		operators;
+		unsigned long							maxInactiveTimeout;
+		unsigned long							maxResponseTimeout;
+		unsigned long							maxChannels;
+		in_addr_t								allowedIP;
 		std::vector<std::string>				motd;
 		std::map<std::string, Channel *>		channels;
 		std::map<std::string, Method>			commands;
@@ -85,6 +96,9 @@ class Server
 		int										infoCmd(const Message &msg, User &user);
 		int										adminCmd(const Message &msg, User &user);
 		int										timeCmd(const Message &msg, User &user);
+		int										rehashCmd(const Message &msg, User &user);
+		int										killCmd(const Message &msg, User &user);
+		int										restartCmd(const Message &msg, User &user);
 
 		// Helpful things for commands
 
@@ -112,6 +126,8 @@ class Server
 		void									deleteBrokenConnections();
 		void									deleteEmptyChannels();
 		void									checkConnectionWithUsers();
+		void 									fillOperatorsList(std::map<std::string, std::string> &operators, JSON::Object *confOperators);
+		void									loadConfig( void );
 
 		// Other methods
 

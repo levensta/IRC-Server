@@ -74,8 +74,6 @@ void	logMessage(const Message &msg)
 
 bool	isValidNick(const std::string &nick)
 {
-	if (nick.length() > 9)
-		return (false);
 	std::string	special = "-[]\\`^{}";
 	for (size_t i = 0; i < nick.size(); i++)
 	{
@@ -101,13 +99,4 @@ bool	isValidChannelName(const std::string &name)
 			return false;
 	}
 	return true;
-}
-
-int		parsePort(const char *port)
-{
-	char *end = NULL;
-	int num = strtol(port, &end, 10);
-	if (strlen(port) > 5 || (end && *end != '\0'))
-		return -1;
-	return num;
 }
