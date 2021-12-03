@@ -283,6 +283,8 @@ int		Server::kickCmd(const Message &msg, User &user)
 		sendError(user, ERR_NOTONCHANNEL, msg.getParams()[0]);
 	else if (!containsNickname(msg.getParams()[1]))
 		sendError(user, ERR_NOSUCHNICK, msg.getParams()[1]);
+	else if (!channels.at(msg.getParams()[0])->containsNickname(msg.getParams()[1]))
+		sendError(user, ERR_USERNOTINCHANNEL, msg.getParams()[1], msg.getParams()[0]);
 	else
 	{
 		Channel	*chan = channels.at(msg.getParams()[0]);
@@ -305,21 +307,19 @@ int		Server::partCmd(const Message &msg, User &user)
 	else
 	{
 		std::queue<std::string>	chans = split(msg.getParams()[0], ',', false);
-		std::vector<std::string>	chansInVector;
 		while (chans.size() > 0)
 		{
 			if (!containsChannel(chans.front()))
-				return sendError(user, ERR_NOSUCHCHANNEL, chans.front());
-			if (!user.isOnChannel(chans.front()))
-				return sendError(user, ERR_NOTONCHANNEL, chans.front());
-			chansInVector.push_back(chans.front());
+				sendError(user, ERR_NOSUCHCHANNEL, chans.front());
+			else if (!user.isOnChannel(chans.front()))
+				sendError(user, ERR_NOTONCHANNEL, chans.front());
+			else
+			{
+				channels.at(chans.front())->sendMessage("PART " + chans.front() + "\n", user, true);
+				channels.at(chans.front())->disconnect(user);
+				user.removeChannel(chans.front());
+			}
 			chans.pop();
-		}
-		for (size_t i = 0; i < chansInVector.size(); ++i)
-		{
-			channels.at(chansInVector[i])->sendMessage("PART " + chansInVector[i] + "\n", user, true);
-			channels.at(chansInVector[i])->disconnect(user);
-			user.removeChannel(chansInVector[i]);
 		}
 	}
 	return 0;
