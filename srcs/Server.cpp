@@ -334,6 +334,7 @@ void	Server::deleteBrokenConnections()
 	{
 		if (connectedUsers[i]->getFlags() & BREAKCONNECTION)
 		{
+			this->nicknamesHistory.addUser(*(connectedUsers[i]));
 			notifyUsers(*(connectedUsers[i]), ":" + connectedUsers[i]->getPrefix() + " QUIT :" + connectedUsers[i]->getQuitMessage() + "\n");
 			close(connectedUsers[i]->getSockfd());
 			std::map<std::string, Channel *>::iterator	beg = channels.begin();

@@ -180,7 +180,7 @@ int		Server::whowasCmd(const Message &msg, User &user)
 				n = atoi(msg.getParams()[1].c_str());
 			n = (n == 0) ? historyList.size() : n;
 
-			for (int i = 0; i < n; ++i)
+			for (int i = 0; i < n && i < static_cast<int>(historyList.size()); ++i)
 			{
 				sendReply(user.getServername(), user, RPL_WHOWASUSER, historyList[i]->getNickname(), \
 				historyList[i]->getUsername(), historyList[i]->getHostname(), historyList[i]->getRealname());
