@@ -22,14 +22,14 @@ int Server::killCmd(const Message &msg, User &user) {
 	}
 
 	string username = msg.getParams()[0];
-	if (username == name) {
+	if (username == this->name) {
 		return (sendError(user, ERR_CANTKILLSERVER));	
 	}
 
-	User *userToKill = getUserByName(username);	
-	if (userToKill == NULL) {
-		return (sendError(user, ERR_NOSUCHNICK));
+	if (!containsNickname(username)) {
+		sendError(user, ERR_NOSUCHNICK, msg.getParams()[0]);
 	}
+	User *userToKill = getUserByName(username);	
 	userToKill->sendMessage(msg.getParams()[1] + "\n");
 	userToKill->setFlag(BREAKCONNECTION);
 	return 0;
