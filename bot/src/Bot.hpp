@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "JSON.hpp"
+#include "Parser.hpp"
 #include "Socket.hpp"
 #include "Message.hpp"
 

@@ -37,11 +37,13 @@ Bot &Bot::operator=(const Bot &other) {
 }
 
 void Bot::loadConfig( void ) {
-	JSON::JSON json(_configFile);
 
-	json.loadFile();
-
-	JSON::Object *conf = json.parse();
+	JSON::Object *conf = NULL;
+	try {
+		conf = JSON::parseFile(_configFile);
+	} catch (std::exception &e) {
+		std::cerr << e.what() << std::endl;
+	}
 
 	if (conf == NULL) {
 		_configLoaded = false;

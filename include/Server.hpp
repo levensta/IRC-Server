@@ -21,7 +21,7 @@ class History;
 #include "Channel.hpp"
 #include "sendError.hpp"
 #include "sendReply.hpp"
-#include "JSON.hpp"
+#include "Parser.hpp"
 
 #define	DISCONNECT	-2
 

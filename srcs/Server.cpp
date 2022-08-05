@@ -53,17 +53,10 @@ void Server::loadConfig() {
 	
 	static bool wasLoaded = false;
 
-	JSON::JSON json("conf/IRConf.json");
 	JSON::Object *conf = NULL;
-
 	try {
-		//Trying to load json file
-		json.loadFile();
-
-		//Parsing whole file in json object
-		conf = json.parse();
-	} 
-	catch (std::exception &e) {
+		conf = JSON::parseFile("conf/IRConf.json");
+	} catch (std::exception &e) {
 		std::cerr << e.what() << std::endl;
 	}
 
